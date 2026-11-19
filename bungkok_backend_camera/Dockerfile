@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy seluruh kode aplikasi dan model
 COPY . .
 
-# Expose port (default 8000)
+# Railway memberikan PORT saat container dijalankan.
 EXPOSE 8000
 
-# Jalankan server FastAPI dengan Uvicorn
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Gunakan port platform saat tersedia dan 8000 untuk pengembangan lokal.
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
