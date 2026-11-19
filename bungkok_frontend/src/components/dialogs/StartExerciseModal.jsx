@@ -9,6 +9,7 @@ import { activeCameraFrame, FrameArtwork } from "../common/CameraFrame";
 import { clockLabel } from "../../utils/exercise";
 import { playReminder } from "../../utils/exportData";
 import { captureFrameAsBlob } from "../../utils/cameraCapture";
+import { startLocalPoseTracker } from "../../utils/localPoseTracker";
 import { startPictureInPictureComposer } from "../../utils/pictureInPictureComposer";
 import {
   drawSkeletonOnCanvas,
@@ -200,6 +201,10 @@ export default function StartExerciseModal({ closeRequest }) {
   const pipCanvas = useRef(null);
   const engineVideo = useRef(null);
   const canvas = useRef(null);
+  const localTrackingReady = useRef(false);
+  const localLandmarks = useRef([]);
+  const localVisualColor = useRef("#22c55e");
+  const lastLocalSnapshot = useRef(0);
   const stream = useRef(null);
   const alive = useRef(true);
   const running = useRef(false);
@@ -210,6 +215,13 @@ export default function StartExerciseModal({ closeRequest }) {
   const settings = useRef({ config, posture, paused });
   settings.current = { config, posture, paused };
   const pictureInPictureSource = () => pipVideo.current?.srcObject ? pipVideo.current : video.current;
+  const updateVisualFrame = (serverLandmarks, color) => {
+    localVisualColor.current = color;
+    const landmarks = localTrackingReady.current && localLandmarks.current.length
+      ? localLandmarks.current
+      : (serverLandmarks || []);
+    setVisualFrame({ landmarks, color });
+  };
 
   useEffect(() => {
     if (camera !== "active" || !video.current || !pipVideo.current || !pipCanvas.current) return undefined;
@@ -439,6 +451,52 @@ export default function StartExerciseModal({ closeRequest }) {
   useEffect(() => {
     if (camera !== "active") return;
 
+    const captureSource = engineVideo.current || video.current;
+    if (!captureSource) return;
+
+    let cancelled = false;
+    let stopTracker = null;
+    localTrackingReady.current = false;
+
+    startLocalPoseTracker({
+      video: captureSource,
+      maxFps: 30,
+      onReady: () => {
+        if (!cancelled) localTrackingReady.current = true;
+      },
+      onLandmarks: (landmarks) => {
+        if (cancelled || !monitorOpen.current) return;
+        localTrackingReady.current = true;
+        localLandmarks.current = landmarks;
+        drawSkeletonOnCanvas(canvas.current, landmarks, localVisualColor.current);
+
+        const now = performance.now();
+        if (landmarks.length && now - lastLocalSnapshot.current >= 200) {
+          lastLocalSnapshot.current = now;
+          setVisualFrame({ landmarks, color: localVisualColor.current });
+        }
+      },
+      onError: () => {
+        localTrackingReady.current = false;
+      },
+    }).then((stop) => {
+      if (cancelled) stop();
+      else stopTracker = stop;
+    }).catch(() => {
+      localTrackingReady.current = false;
+    });
+
+    return () => {
+      cancelled = true;
+      localTrackingReady.current = false;
+      localLandmarks.current = [];
+      stopTracker?.();
+    };
+  }, [camera, povMode]);
+
+  useEffect(() => {
+    if (camera !== "active") return;
+
     let isSubscribed = true;
     let worker = null;
     let fallbackInterval = null;
@@ -538,11 +596,11 @@ export default function StartExerciseModal({ closeRequest }) {
             }
 
             res.displayTitle = statusTitle;
-            setVisualFrame({ landmarks: res.landmarks || [], color: boneColor });
-            if (monitorOpen.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor);
+            updateVisualFrame(res.landmarks, boneColor);
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor);
           } else {
-            setVisualFrame({ landmarks: res.landmarks || [], color: "#ef4444" });
-            if (monitorOpen.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444");
+            updateVisualFrame(res.landmarks, "#ef4444");
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444");
           }
         }
         // KASUS B: Tahap Persiapan & Kalibrasi (Step 0, 1, 2)
@@ -564,8 +622,8 @@ export default function StartExerciseModal({ closeRequest }) {
               .reverse()
               .find((item) => item.isUpright === isUpright)?.feedback;
             const boneColor = isUpright ? "#22c55e" : "#f59e0b";
-            setVisualFrame({ landmarks: res.landmarks || [], color: boneColor });
-            if (monitorOpen.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor);
+            updateVisualFrame(res.landmarks, boneColor);
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor);
             setAlignmentInfo({
               isUpright,
               feedback:
@@ -574,8 +632,8 @@ export default function StartExerciseModal({ closeRequest }) {
               hasPerson: true,
             });
           } else {
-            setVisualFrame({ landmarks: res.landmarks || [], color: "#ef4444" });
-            if (monitorOpen.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444");
+            updateVisualFrame(res.landmarks, "#ef4444");
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444");
             setAlignmentInfo({
               isUpright: false,
               feedback: res.reason || "Pastikan tubuh berada di dalam kamera.",
