@@ -1,0 +1,353 @@
+<svg width="480" height="680" viewBox="0 0 480 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- THEME 02: RETRO WINDOWS 95/98 MS PAINT -->
+  <defs>
+    <!-- 3D Bevel Filters / Gradients -->
+    <linearGradient id="winTitleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#000080" />
+      <stop offset="100%" stop-color="#1084d0" />
+    </linearGradient>
+    <filter id="winDropShadow" x="-5%" y="-3%" width="115%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="4" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <g id="Theme_Windows95_Paint" filter="url(#winDropShadow)">
+    <!-- Outer Window Frame (Classic Windows 95 Grey #c0c0c0) -->
+    <rect id="Window_Base" x="10" y="10" width="460" height="650" fill="#c0c0c0" stroke="#dfdfdf" stroke-width="2"/>
+    
+    <!-- 3D Outer Border Highlights & Shadows -->
+    <!-- Top & Left Light Edge -->
+    <polyline points="10,660 10,10 470,10" stroke="#ffffff" stroke-width="3" fill="none"/>
+    <!-- Bottom & Right Dark Edge -->
+    <polyline points="470,10 470,660 10,660" stroke="#000000" stroke-width="3" fill="none"/>
+    <polyline points="468,12 468,658 12,658" stroke="#808080" stroke-width="2" fill="none"/>
+
+    <!-- ================= 1. TITLEBAR ================= -->
+    <g id="Titlebar" transform="translate(14, 14)">
+      <rect x="0" y="0" width="452" height="24" fill="url(#winTitleGradient)"/>
+      
+      <!-- Paint Icon (Pixel palette and brush) -->
+      <g id="Paint_Icon" transform="translate(4, 3)">
+        <rect x="0" y="0" width="18" height="18" fill="#ffffff" rx="2"/>
+        <path d="M3 13 C2 10, 4 4, 9 4 C14 4, 16 9, 14 13 C12 16, 5 16, 3 13 Z" fill="#d4aa70" stroke="#5a3818" stroke-width="1"/>
+        <circle cx="6" cy="7" r="1.5" fill="#ff0000"/>
+        <circle cx="10" cy="6" r="1.5" fill="#ffff00"/>
+        <circle cx="12" cy="9" r="1.5" fill="#0000ff"/>
+        <circle cx="6" cy="11" r="1.5" fill="#00aa00"/>
+        <line x1="8" y1="13" x2="16" y2="3" stroke="#8b4513" stroke-width="2" stroke-linecap="round"/>
+        <path d="M15 2 L17 4 L14 6 Z" fill="#a0a0a0"/>
+      </g>
+
+      <!-- Window Title Text -->
+      <text x="28" y="16" fill="#ffffff" font-family="'Segoe UI', Tahoma, 'MS Sans Serif', sans-serif" font-size="12" font-weight="bold" letter-spacing="0.5">posture_cam.bmp - Paint</text>
+
+      <!-- Classic Window Controls (Min, Max, Close) -->
+      <g id="Window_Buttons" transform="translate(390, 3)">
+        <!-- Minimize Button -->
+        <rect x="0" y="0" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="17,1 17,17 1,17" stroke="#000000" stroke-width="1" fill="none"/>
+        <polyline points="16,2 16,16 2,16" stroke="#808080" stroke-width="1" fill="none"/>
+        <rect x="4" y="12" width="9" height="2.5" fill="#000000"/>
+
+        <!-- Maximize Button -->
+        <g transform="translate(20, 0)">
+          <rect x="0" y="0" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+          <polyline points="17,1 17,17 1,17" stroke="#000000" stroke-width="1" fill="none"/>
+          <polyline points="16,2 16,16 2,16" stroke="#808080" stroke-width="1" fill="none"/>
+          <rect x="3" y="3" width="11" height="10" fill="none" stroke="#000000" stroke-width="2"/>
+          <rect x="3" y="3" width="11" height="3" fill="#000000"/>
+        </g>
+
+        <!-- Close Button -->
+        <g transform="translate(40, 0)">
+          <rect x="0" y="0" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+          <polyline points="17,1 17,17 1,17" stroke="#000000" stroke-width="1" fill="none"/>
+          <polyline points="16,2 16,16 2,16" stroke="#808080" stroke-width="1" fill="none"/>
+          <path d="M4 4 L13 13 M13 4 L4 13" stroke="#000000" stroke-width="2" stroke-linecap="square"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ================= 2. MENUBAR ================= -->
+    <g id="Menubar" transform="translate(16, 42)">
+      <rect x="0" y="0" width="448" height="20" fill="#c0c0c0"/>
+      <text x="6" y="14" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="12"><tspan text-decoration="underline">F</tspan>ile</text>
+      <text x="40" y="14" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="12"><tspan text-decoration="underline">E</tspan>dit</text>
+      <text x="74" y="14" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="12"><tspan text-decoration="underline">V</tspan>iew</text>
+      <text x="114" y="14" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="12"><tspan text-decoration="underline">I</tspan>mage</text>
+      <text x="160" y="14" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="12"><tspan text-decoration="underline">O</tspan>ptions</text>
+      <text x="215" y="14" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="12"><tspan text-decoration="underline">H</tspan>elp</text>
+      <line x1="0" y1="20" x2="448" y2="20" stroke="#808080" stroke-width="1"/>
+      <line x1="0" y1="21" x2="448" y2="21" stroke="#ffffff" stroke-width="1"/>
+    </g>
+
+    <!-- ================= 3. TOOLBAR (LEFT SIDE, 2 COLUMNS) ================= -->
+    <g id="Toolbar" transform="translate(18, 68)">
+      <!-- Outer Tool Frame Inset -->
+      <rect x="0" y="0" width="60" height="260" fill="#c0c0c0"/>
+      
+      <!-- Tool Buttons (16 Tools in 2 columns: 8 rows of 28x28) -->
+      <!-- Row 1: Freeform select & Rect Select -->
+      <g transform="translate(2, 2)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Star / Free Select Icon -->
+        <polygon points="13,4 15,9 20,9 16,13 18,18 13,15 8,18 10,13 6,9 11,9" stroke="#000000" stroke-width="1" stroke-dasharray="2,2" fill="none"/>
+      </g>
+      <g transform="translate(30, 2)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Rect Select Icon -->
+        <rect x="5" y="5" width="16" height="16" stroke="#000000" stroke-width="1.5" stroke-dasharray="2,2" fill="none"/>
+      </g>
+
+      <!-- Row 2: Eraser & Fill Bucket -->
+      <g transform="translate(2, 30)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Eraser Icon -->
+        <polygon points="8,18 16,8 20,11 12,21" fill="#f8a5c2" stroke="#000000" stroke-width="1"/>
+      </g>
+      <g transform="translate(30, 30)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Paint Bucket Icon -->
+        <path d="M10 6 L18 14 L12 19 L5 12 Z" fill="#00a8ff" stroke="#000000" stroke-width="1"/>
+        <path d="M16 16 L21 21" stroke="#000000" stroke-width="2"/>
+        <circle cx="21" cy="21" r="1.5" fill="#00a8ff"/>
+      </g>
+
+      <!-- Row 3: Eyedropper & Magnifier -->
+      <g transform="translate(2, 58)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Eyedropper -->
+        <line x1="18" y1="5" x2="8" y2="17" stroke="#000000" stroke-width="2.5"/>
+        <line x1="6" y1="19" x2="8" y2="17" stroke="#000000" stroke-width="1.5"/>
+      </g>
+      <g transform="translate(30, 58)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Magnifier Glass -->
+        <circle cx="11" cy="11" r="5" stroke="#000000" stroke-width="1.5" fill="none"/>
+        <line x1="15" y1="15" x2="20" y2="20" stroke="#000000" stroke-width="2.5"/>
+      </g>
+
+      <!-- Row 4: Pencil & Brush (Pencil is ACTIVE/PRESSED) -->
+      <g transform="translate(2, 86)">
+        <!-- Pressed State -->
+        <rect x="0" y="0" width="26" height="26" fill="#e0e0e0" stroke="#808080" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="0,0 26,0 0,26" stroke="#000000" stroke-width="0.5" fill="none"/>
+        <!-- Pencil Icon -->
+        <polygon points="17,6 20,9 10,19 7,19 7,16" fill="#f5cd79" stroke="#000000" stroke-width="1"/>
+        <polygon points="7,19 7,16 9,19" fill="#000000"/>
+      </g>
+      <g transform="translate(30, 86)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <!-- Brush -->
+        <path d="M16 6 C18 4, 21 7, 19 9 L12 17 L8 18 L9 14 Z" fill="#718093" stroke="#000000" stroke-width="1"/>
+      </g>
+
+      <!-- Row 5: Airbrush & Text "A" -->
+      <g transform="translate(2, 114)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <rect x="8" y="11" width="10" height="9" fill="#4b6584" stroke="#000000" stroke-width="1"/>
+        <line x1="13" y1="6" x2="13" y2="11" stroke="#000000" stroke-width="2"/>
+      </g>
+      <g transform="translate(30, 114)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <text x="7" y="19" font-family="'Times New Roman', serif" font-weight="bold" font-size="18" fill="#000000">A</text>
+      </g>
+
+      <!-- Row 6: Line & Curve -->
+      <g transform="translate(2, 142)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <line x1="5" y1="20" x2="20" y2="5" stroke="#000000" stroke-width="2"/>
+      </g>
+      <g transform="translate(30, 142)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <path d="M5 19 Q13 3 21 17" stroke="#000000" stroke-width="2" fill="none"/>
+      </g>
+
+      <!-- Row 7: Rectangle & Polygon -->
+      <g transform="translate(2, 170)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <rect x="5" y="7" width="16" height="12" stroke="#000000" stroke-width="1.5" fill="none"/>
+      </g>
+      <g transform="translate(30, 170)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <polygon points="6,19 10,7 21,11 16,19" stroke="#000000" stroke-width="1.5" fill="none"/>
+      </g>
+
+      <!-- Row 8: Ellipse & Rounded Rectangle -->
+      <g transform="translate(2, 198)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <ellipse cx="13" cy="13" rx="9" ry="7" stroke="#000000" stroke-width="1.5" fill="none"/>
+      </g>
+      <g transform="translate(30, 198)">
+        <rect x="0" y="0" width="26" height="26" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="25,1 25,25 1,25" stroke="#808080" stroke-width="1"/>
+        <rect x="5" y="6" width="16" height="14" rx="4" stroke="#000000" stroke-width="1.5" fill="none"/>
+      </g>
+
+      <!-- Sub-options Box (Under tools: line thickness / transparency option box) -->
+      <g id="Tool_Options_Box" transform="translate(4, 230)">
+        <rect x="0" y="0" width="50" height="74" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
+        <polyline points="49,1 49,73 1,73" stroke="#ffffff" stroke-width="1" fill="none"/>
+        <polyline points="0,0 50,0 0,74" stroke="#000000" stroke-width="1" fill="none"/>
+        <!-- Line sizes -->
+        <rect x="8" y="10" width="34" height="2" fill="#000000"/>
+        <rect x="8" y="24" width="34" height="4" fill="#000000"/>
+        <rect x="8" y="40" width="34" height="7" fill="#000080"/>
+        <rect x="8" y="58" width="34" height="9" fill="#000000"/>
+      </g>
+    </g>
+
+    <!-- ================= 4. MAIN CANVAS CUTOUT (WEBCAM / LIVE STREAM AREA) ================= -->
+    <g id="Canvas_Area" transform="translate(86, 68)">
+      <!-- Canvas Sunken Bevel Border -->
+      <rect x="0" y="0" width="374" height="470" fill="#808080"/>
+      <rect x="2" y="2" width="372" height="468" fill="#ffffff"/>
+      <polyline points="0,0 374,0 0,470" stroke="#000000" stroke-width="2" fill="none"/>
+      <polyline points="374,0 374,470 0,470" stroke="#dfdfdf" stroke-width="2" fill="none"/>
+      
+      <!-- Live Camera Cutout Window -->
+      <!-- Transparent aperture for webcam video tag -->
+      <rect id="Webcam_Cutout" x="4" y="4" width="348" height="444" fill="#0f172a" opacity="0.95"/>
+      
+      <!-- Retro Crosshair / Guide overlay inside canvas -->
+      <g id="Camera_HUD_Overlay" opacity="0.8">
+        <!-- Center Target Box -->
+        <rect x="118" y="130" width="120" height="150" stroke="#00ff66" stroke-width="1.5" stroke-dasharray="4,4" fill="none"/>
+        <circle cx="178" cy="180" r="35" stroke="#00ff66" stroke-width="1.5" stroke-dasharray="2,3" fill="none"/>
+        
+        <!-- Live Posture Status Tag inside Paint Canvas -->
+        <rect x="14" y="14" width="130" height="24" fill="#000000" stroke="#00ff66" stroke-width="1"/>
+        <circle cx="24" cy="26" r="4" fill="#00ff66"/>
+        <text x="34" y="29" fill="#00ff66" font-family="monospace" font-size="11" font-weight="bold">POSTURE: GOOD</text>
+        
+        <text x="14" y="430" fill="#ffffff" font-family="monospace" font-size="10" opacity="0.7">CANVAS: 640x480 RGB 24bpp</text>
+      </g>
+
+      <!-- Windows 95 Scrollbars -->
+      <!-- Vertical Scrollbar (Right) -->
+      <g id="V_Scrollbar" transform="translate(354, 2)">
+        <rect x="0" y="0" width="18" height="448" fill="#dfdfdf"/>
+        <!-- Scrollbar Up Button -->
+        <rect x="0" y="0" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="17,1 17,17 1,17" stroke="#000000" stroke-width="1" fill="none"/>
+        <polygon points="9,6 5,12 13,12" fill="#000000"/>
+        <!-- Scrollbar Thumb -->
+        <rect x="0" y="30" width="18" height="70" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="17,31 17,99 1,99" stroke="#000000" stroke-width="1" fill="none"/>
+        <!-- Scrollbar Down Button -->
+        <rect x="0" y="430" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="17,431 17,447 1,447" stroke="#000000" stroke-width="1" fill="none"/>
+        <polygon points="9,442 5,436 13,436" fill="#000000"/>
+      </g>
+      
+      <!-- Horizontal Scrollbar (Bottom) -->
+      <g id="H_Scrollbar" transform="translate(2, 450)">
+        <rect x="0" y="0" width="352" height="18" fill="#dfdfdf"/>
+        <!-- Scroll Left Button -->
+        <rect x="0" y="0" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="17,1 17,17 1,17" stroke="#000000" stroke-width="1" fill="none"/>
+        <polygon points="6,9 12,5 12,13" fill="#000000"/>
+        <!-- Scrollbar Thumb -->
+        <rect x="40" y="0" width="70" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="109,1 109,17 41,17" stroke="#000000" stroke-width="1" fill="none"/>
+        <!-- Scroll Right Button -->
+        <rect x="334" y="0" width="18" height="18" fill="#c0c0c0" stroke="#ffffff" stroke-width="1"/>
+        <polyline points="351,1 351,17 335,17" stroke="#000000" stroke-width="1" fill="none"/>
+        <polygon points="346,9 340,5 340,13" fill="#000000"/>
+      </g>
+      <!-- Bottom right corner box -->
+      <rect x="354" y="450" width="18" height="18" fill="#c0c0c0"/>
+    </g>
+
+    <!-- ================= 5. COLOR PALETTE BAR (BOTTOM) ================= -->
+    <g id="Color_Palette" transform="translate(18, 546)">
+      <!-- Palette Outer Frame -->
+      <rect x="0" y="0" width="442" height="48" fill="#c0c0c0"/>
+      
+      <!-- Active Color Indicator Box (Overlapping Foreground & Background) -->
+      <g id="Active_Color_Box" transform="translate(4, 4)">
+        <rect x="0" y="0" width="40" height="40" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
+        <polyline points="39,1 39,39 1,39" stroke="#ffffff" stroke-width="1" fill="none"/>
+        <!-- Secondary / Background Color (White) -->
+        <rect x="15" y="15" width="20" height="20" fill="#ffffff" stroke="#808080" stroke-width="1"/>
+        <!-- Primary / Foreground Color (Black) -->
+        <rect x="6" y="6" width="20" height="20" fill="#000000" stroke="#808080" stroke-width="1"/>
+      </g>
+
+      <!-- 28 Color Swatches (2 rows of 14) -->
+      <g id="Swatches" transform="translate(52, 4)">
+        <!-- Row 1 -->
+        <!-- 1: Black -->   <rect x="0" y="0" width="26" height="19" fill="#000000" stroke="#808080" stroke-width="1"/>
+        <!-- 2: DarkGrey --><rect x="27" y="0" width="26" height="19" fill="#808080" stroke="#808080" stroke-width="1"/>
+        <!-- 3: Maroon -->  <rect x="54" y="0" width="26" height="19" fill="#800000" stroke="#808080" stroke-width="1"/>
+        <!-- 4: Olive -->   <rect x="81" y="0" width="26" height="19" fill="#808000" stroke="#808080" stroke-width="1"/>
+        <!-- 5: Green -->   <rect x="108" y="0" width="26" height="19" fill="#008000" stroke="#808080" stroke-width="1"/>
+        <!-- 6: Teal -->    <rect x="135" y="0" width="26" height="19" fill="#008080" stroke="#808080" stroke-width="1"/>
+        <!-- 7: Navy -->    <rect x="162" y="0" width="26" height="19" fill="#000080" stroke="#808080" stroke-width="1"/>
+        <!-- 8: Purple -->  <rect x="189" y="0" width="26" height="19" fill="#800080" stroke="#808080" stroke-width="1"/>
+        <!-- 9: Brown -->   <rect x="216" y="0" width="26" height="19" fill="#808040" stroke="#808080" stroke-width="1"/>
+        <!-- 10: DkGreen --><rect x="243" y="0" width="26" height="19" fill="#004040" stroke="#808080" stroke-width="1"/>
+        <!-- 11: Steel -->  <rect x="270" y="0" width="26" height="19" fill="#0080ff" stroke="#808080" stroke-width="1"/>
+        <!-- 12: DkBlue --> <rect x="297" y="0" width="26" height="19" fill="#004080" stroke="#808080" stroke-width="1"/>
+        <!-- 13: Violet --> <rect x="324" y="0" width="26" height="19" fill="#8000ff" stroke="#808080" stroke-width="1"/>
+        <!-- 14: Ochre -->  <rect x="351" y="0" width="26" height="19" fill="#804000" stroke="#808080" stroke-width="1"/>
+
+        <!-- Row 2 -->
+        <!-- 1: White -->   <rect x="0" y="21" width="26" height="19" fill="#ffffff" stroke="#808080" stroke-width="1"/>
+        <!-- 2: LtGrey -->  <rect x="27" y="21" width="26" height="19" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
+        <!-- 3: Red -->     <rect x="54" y="21" width="26" height="19" fill="#ff0000" stroke="#808080" stroke-width="1"/>
+        <!-- 4: Yellow -->  <rect x="81" y="21" width="26" height="19" fill="#ffff00" stroke="#808080" stroke-width="1"/>
+        <!-- 5: Lime -->    <rect x="108" y="21" width="26" height="19" fill="#00ff00" stroke="#808080" stroke-width="1"/>
+        <!-- 6: Cyan -->    <rect x="135" y="21" width="26" height="19" fill="#00ffff" stroke="#808080" stroke-width="1"/>
+        <!-- 7: Blue -->    <rect x="162" y="21" width="26" height="19" fill="#0000ff" stroke="#808080" stroke-width="1"/>
+        <!-- 8: Magenta --> <rect x="189" y="21" width="26" height="19" fill="#ff00ff" stroke="#808080" stroke-width="1"/>
+        <!-- 9: Cream -->   <rect x="216" y="21" width="26" height="19" fill="#ffff80" stroke="#808080" stroke-width="1"/>
+        <!-- 10: Mint -->   <rect x="243" y="21" width="26" height="19" fill="#00ff80" stroke="#808080" stroke-width="1"/>
+        <!-- 11: SkyBlue --> <rect x="270" y="21" width="26" height="19" fill="#80ffff" stroke="#808080" stroke-width="1"/>
+        <!-- 12: Periwinkle --><rect x="297" y="21" width="26" height="19" fill="#8080ff" stroke="#808080" stroke-width="1"/>
+        <!-- 13: Pink -->   <rect x="324" y="21" width="26" height="19" fill="#ff0080" stroke="#808080" stroke-width="1"/>
+        <!-- 14: Orange --> <rect x="351" y="21" width="26" height="19" fill="#ff8040" stroke="#808080" stroke-width="1"/>
+      </g>
+    </g>
+
+    <!-- ================= 6. STATUS BAR (BOTTOM FOOTER) ================= -->
+    <g id="Status_Bar" transform="translate(18, 602)">
+      <!-- Main Status Inset -->
+      <rect x="0" y="0" width="310" height="24" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
+      <polyline points="309,1 309,23 1,23" stroke="#ffffff" stroke-width="1" fill="none"/>
+      <polyline points="0,0 310,0 0,24" stroke="#000000" stroke-width="1" fill="none"/>
+      <text x="8" y="16" fill="#000000" font-family="'Segoe UI', Tahoma, sans-serif" font-size="11">For Help, click Help Topics on the Help Menu.</text>
+      
+      <!-- Coordinate / Dimension Box 1 -->
+      <g transform="translate(315, 0)">
+        <rect x="0" y="0" width="60" height="24" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
+        <polyline points="59,1 59,23 1,23" stroke="#ffffff" stroke-width="1" fill="none"/>
+        <polyline points="0,0 60,0 0,24" stroke="#000000" stroke-width="1" fill="none"/>
+        <text x="12" y="16" fill="#000000" font-family="monospace" font-size="11">240, 180</text>
+      </g>
+
+      <!-- Coordinate / Dimension Box 2 -->
+      <g transform="translate(380, 0)">
+        <rect x="0" y="0" width="62" height="24" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
+        <polyline points="61,1 61,23 1,23" stroke="#ffffff" stroke-width="1" fill="none"/>
+        <polyline points="0,0 62,0 0,24" stroke="#000000" stroke-width="1" fill="none"/>
+        <text x="8" y="16" fill="#000000" font-family="monospace" font-size="11">480x360</text>
+      </g>
+    </g>
+  </g>
+</svg>

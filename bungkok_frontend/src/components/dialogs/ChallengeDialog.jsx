@@ -1,0 +1,13 @@
+import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
+import { Button, Progress } from '../common/SoftUI';
+import { FigmaIcon } from '../common/FigmaAsset';
+
+export default function ChallengeDialog({ type, payload }) {
+  const { closeModal, joinChallenge, updatePreferences, claimAchievement } = useApp();
+  const navigate = useNavigate();
+  if (type === 'bergabung-sukses') return <><h2>Tantangan aktif</h2><p>Tantangan “{payload.challenge?.title}” sudah dimulai tanpa progres awal.</p><div className="dialog-actions"><Button primary onClick={() => { closeModal(); navigate('/app/tantangan'); }}>Kembali ke tantangan</Button></div></>;
+  if (type === 'badge-detail') return <><h2>{payload.title}</h2><p>{payload.description}</p><div className="dialog-stack"><FigmaIcon className="self-start" file={payload.unlocked ? '2d04b.svg' : 'b6aae.svg'} /><strong>{payload.unlocked ? 'Diperoleh pada ' + payload.date : (payload.progressText || 'Belum diperoleh')}</strong><div className="data-pair"><span>Hadiah pencapaian</span><strong>+{payload.rewardPoints || 0} poin</strong></div><p>{payload.unlocked ? (payload.claimed ? 'Hadiah sudah diklaim.' : 'Hadiah siap diklaim satu kali.') : 'Selesaikan syarat untuk membukanya.'}</p></div><div className="dialog-actions">{payload.unlocked && !payload.claimed && <Button primary onClick={async () => { await claimAchievement(payload.id); closeModal(); }}>Klaim poin</Button>}{payload.unlocked && payload.claimed && <Button primary onClick={async () => { await updatePreferences({ selectedBadge: payload.title }); closeModal(); }}>Gunakan di profil</Button>}<Button onClick={closeModal}>Tutup</Button></div></>;
+  if (type === 'tantangan-konfirmasi') return <><h2>Ikuti {payload.title}?</h2><p>{payload.requirement}</p><div className="data-pair"><span>Hadiah saat selesai</span><strong>{payload.rewardValue}</strong></div><div className="dialog-actions"><Button primary onClick={() => joinChallenge(payload.id)}>Ikuti tantangan</Button><Button onClick={closeModal}>Batal</Button></div></>;
+  return <><h2>{payload.title}</h2><p>{payload.joinedDate ? 'Diikuti sejak ' + payload.joinedDate : payload.status}</p><div className="dialog-stack"><div className="data-pair"><span>Progres terverifikasi</span><strong>{payload.current} / {payload.total} {payload.unit}</strong></div><Progress value={payload.current} max={payload.total} pink /><p>{payload.requirement}</p></div><div className="dialog-actions"><Button primary onClick={() => { closeModal(); navigate('/app/dashboard'); }}>Lanjut latihan</Button><Button onClick={closeModal}>Kembali</Button></div></>;
+}

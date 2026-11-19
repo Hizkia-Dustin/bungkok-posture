@@ -1,0 +1,93 @@
+.page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.page-transition[data-phase="cover"],
+.page-transition[data-phase="loading"],
+.page-transition[data-phase="reveal"] {
+  pointer-events: auto;
+}
+.page-transition svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.page-transition path {
+  fill: none;
+  stroke: #58aadd;
+  stroke-width: 0;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ==========================================================================
+   BRANDING & STATUS MEMUAT AKUN (PAGE REFRESH ANIMATION)
+   Muncul secara elegan di atas SVG overlay saat memuat akun / buka dashboard
+   ========================================================================== */
+.page-transition-brand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -46%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  pointer-events: none;
+  z-index: 10;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s;
+}
+
+.page-transition-brand.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%);
+}
+
+.page-transition-brand .brand-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  margin-bottom: 14px;
+  animation: pageTransitionSpin 0.75s linear infinite;
+}
+
+.page-transition-brand .brand-logo {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.page-transition-brand .brand-subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.95;
+  letter-spacing: 0.5px;
+}
+
+@keyframes pageTransitionSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition {
+    display: none;
+  }
+}

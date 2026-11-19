@@ -1,0 +1,457 @@
+/* ==========================================================================
+   HALAMAN AUTH (LOGIN & REGISTER)
+   Desain responsif 2 kolom: Form kiri & Visual ilustrasi kanan
+   ========================================================================== */
+
+.auth-page {
+  display: grid;
+  grid-template-columns: 46% 54%;
+  min-height: 100vh;
+  padding: 24px;
+  gap: 24px;
+  background: #f8fbff;
+  color: #203d55;
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   KOLOM KIRI: FORM LOGIN & REGISTER
+   -------------------------------------------------------------------------- */
+.auth-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 40px 20px;
+  min-width: 0;
+}
+
+.auth-header,
+.auth-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo BUNGKOK. */
+.auth-logo {
+  font: 36px Cetrinn, serif;
+  color: #357bac;
+  text-decoration: none;
+}
+
+.auth-logo span,
+.auth-form-area h1 span,
+.auth-visual h2 span {
+  color: #ff4fa3;
+}
+
+/* Tombol Beranda di pojok kanan atas */
+.auth-back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #526b7e;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.auth-back:hover {
+  color: #357bac;
+}
+
+/* Area Formulir */
+.auth-form-area {
+  width: 100%;
+  max-width: 428px;
+  margin: 70px auto;
+}
+
+.auth-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  color: #357bac;
+  font-weight: 600;
+}
+
+.auth-eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 2px;
+  background: #ff4fa3;
+}
+
+.auth-form-area h1 {
+  font: 56px/1.15 Camood, serif;
+  color: #357bac;
+  margin: 18px 0;
+}
+
+.auth-form-area > p {
+  font-size: 15px;
+  line-height: 24px;
+  color: #526b7e;
+}
+
+/* Tombol Lanjutkan dengan Google & Submit Masuk/Daftar */
+.auth-google,
+.auth-submit {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 17px;
+  font-size: 15px;
+  font-weight: 600;
+  transition: filter 0.2s;
+  cursor: pointer;
+}
+
+.auth-google {
+  margin-top: 28px;
+  background: #dff2ff;
+  color: #102b3f;
+}
+
+.auth-submit {
+  background: #ff4fa3;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(255, 79, 163, 0.3);
+}
+
+.auth-submit:hover {
+  color: #ffffff !important;
+  filter: brightness(0.96);
+}
+
+.auth-google:hover {
+  filter: brightness(0.96);
+}
+
+/* Garis Pembatas "atau masuk/daftar dengan email" */
+.auth-divider {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+  color: #526b7e;
+  margin: 22px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #d8e5ee;
+}
+
+/* Field Input Form */
+.auth-field {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #203d55;
+  margin-bottom: 20px;
+}
+
+.auth-field > span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  border: 1px solid #d8e5ee;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0 16px;
+  margin-top: 8px;
+}
+
+.auth-field input {
+  width: 100%;
+  min-width: 0;
+  outline: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #203d55;
+}
+
+.auth-field input::placeholder {
+  color: #8da2b3;
+}
+
+.auth-field > span:focus-within {
+  outline: 2px solid #357bac;
+  outline-offset: 2px;
+  border-color: #357bac;
+}
+
+.auth-field input:focus-visible {
+  outline: 0 !important;
+}
+
+/* Opsi Checkbox & Lupa Kata Sandi */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 13px;
+  color: #526b7e;
+}
+
+.auth-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 20px;
+  color: #526b7e;
+  cursor: pointer;
+}
+
+.auth-options input {
+  accent-color: #357bac;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.auth-options button,
+.auth-switch a {
+  color: #2872a4;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.auth-switch a,
+.auth-options label button {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Petunjuk Password */
+.auth-password-help {
+  display: block;
+  font-size: 12px;
+  color: #526b7e;
+  margin-top: -10px;
+}
+
+/* Teks Switch "Belum punya akun? Daftar sekarang" */
+.auth-form-area .auth-switch {
+  text-align: center;
+  font-size: 13.5px;
+  margin-top: 20px;
+  color: #526b7e;
+}
+
+/* Footer Kiri */
+.auth-footer {
+  font-size: 12px;
+  color: #526b7e;
+}
+
+.auth-footer > div {
+  display: flex;
+  gap: 20px;
+}
+
+.auth-footer button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #526b7e;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.auth-footer button:hover {
+  color: #203d55;
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   KOLOM KANAN: VISUAL & ILUSTRASI
+   -------------------------------------------------------------------------- */
+.auth-visual {
+  min-height: 976px;
+  position: relative;
+  border-radius: 28px;
+  overflow: hidden;
+  text-align: center;
+  background: linear-gradient(#58aadd 60%, #f8fbff 98%);
+  margin-right: 24px;
+}
+
+.auth-visual-eyebrow {
+  position: absolute;
+  top: 36px;
+  left: 40px;
+  color: #ffffff;
+  letter-spacing: 1.3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.auth-visual-eyebrow::before {
+  content: '•';
+  color: #ff4fa3;
+  margin-right: 9px;
+  font-size: 20px;
+  vertical-align: -2px;
+}
+
+.auth-visual h2 {
+  font: 76px/1.12 Camood, serif;
+  color: #ffffff;
+  position: relative;
+  z-index: 1;
+  margin-top: 110px;
+}
+
+.auth-script {
+  font: 44px 'Pinyon Script', cursive;
+  color: #ffffff;
+  margin-top: 16px;
+}
+
+.auth-figure {
+  position: absolute;
+  width: 82%;
+  height: auto;
+  left: 9%;
+  top: 32%;
+}
+
+/* Popup Reminder Tulang Belakang */
+.auth-reminder {
+  position: absolute;
+  top: 62%;
+  right: 19%;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 13px 18px;
+  background: #fff0f7;
+  border-radius: 30px;
+  transform: rotate(6deg);
+  font-size: 13px;
+  font-weight: 600;
+  color: #203d55;
+  z-index: 2;
+  box-shadow: 0 4px 15px rgba(255, 79, 163, 0.15);
+}
+
+/* Kotak Pilar Manfaat Bawah */
+.auth-benefits {
+  position: absolute;
+  bottom: 40px;
+  left: 5.5%;
+  width: 89%;
+  padding: 24px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 30px rgba(56, 110, 158, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.auth-benefits h3 {
+  font: 24px Cetrinn, serif;
+  color: #357bac;
+  margin-bottom: 22px;
+  font-weight: 600;
+}
+
+.auth-benefits > div {
+  display: flex;
+  justify-content: space-around;
+}
+
+.auth-benefits span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #405d73;
+  flex: 1;
+}
+
+.auth-benefits span + span {
+  border-left: 1px solid #d8e5ee;
+}
+
+.auth-footnote {
+  position: absolute;
+  bottom: 12px;
+  width: 100%;
+  left: 0;
+  font-size: 11px;
+  color: #526b7e;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIF MOBILE & LAPTOP KECIL
+   -------------------------------------------------------------------------- */
+@media (min-width: 1024px) and (max-height: 900px) {
+  .auth-page {
+    padding: 18px;
+    gap: 18px;
+  }
+  .auth-visual {
+    min-height: calc(100vh - 36px);
+    margin-right: 18px;
+  }
+  .auth-left {
+    padding: 18px 30px;
+  }
+  .auth-form-area {
+    margin: 46px auto;
+    max-width: 390px;
+  }
+  .auth-form-area h1 {
+    font-size: 48px;
+  }
+  .auth-visual h2 {
+    margin-top: 90px;
+    font-size: 64px;
+  }
+  .auth-figure {
+    top: 32%;
+  }
+  .auth-benefits {
+    padding: 20px 10px;
+  }
+  .auth-benefits h3 {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+  .auth-visual {
+    display: none;
+  }
+  .auth-left {
+    padding: 20px;
+  }
+  .auth-form-area {
+    margin: 60px auto;
+  }
+}

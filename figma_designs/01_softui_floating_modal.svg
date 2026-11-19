@@ -1,0 +1,176 @@
+<svg width="1040" height="640" viewBox="0 0 1040 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Shadow -->
+    <filter id="modal-shadow" x="0" y="0" width="1040" height="640" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="20" flood-color="#1e293b" flood-opacity="0.12" />
+    </filter>
+    <!-- Primary Pink Gradient -->
+    <linearGradient id="pink-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF72B6" />
+      <stop offset="100%" stop-color="#FF4D99" />
+    </linearGradient>
+    <!-- Header Soft Gradient -->
+    <linearGradient id="header-gradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F8FAFC" />
+    </linearGradient>
+  </defs>
+
+  <!-- Modal Background Card -->
+  <g filter="url(#modal-shadow)">
+    <rect x="20" y="20" width="1000" height="600" rx="28" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+  </g>
+
+  <!-- ==================== HEADER BAR ==================== -->
+  <rect x="20" y="20" width="1000" height="64" rx="28" fill="url(#header-gradient)" />
+  <line x1="20" y1="84" x2="1020" y2="84" stroke="#F1F5F9" stroke-width="1.5" />
+
+  <!-- Steps Indicator (Left) -->
+  <g id="steps" transform="translate(48, 42)">
+    <!-- Step 1 -->
+    <circle cx="10" cy="10" r="10" fill="#E2E8F0" />
+    <text x="10" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" text-anchor="middle">1</text>
+    <text x="26" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Persiapan</text>
+
+    <!-- Step 2 -->
+    <circle cx="120" cy="10" r="10" fill="#E2E8F0" />
+    <text x="120" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" text-anchor="middle">2</text>
+    <text x="136" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Kalibrasi</text>
+
+    <!-- Step 3 -->
+    <circle cx="225" cy="10" r="10" fill="#E2E8F0" />
+    <text x="225" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" text-anchor="middle">3</text>
+    <text x="241" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Atur Sesi</text>
+
+    <!-- Step 4 (Active) -->
+    <circle cx="335" cy="10" r="11" fill="url(#pink-gradient)" />
+    <text x="335" y="14" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="800" text-anchor="middle">4</text>
+    <text x="353" y="14" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="700">Latihan Realtime</text>
+
+    <!-- Step 5 -->
+    <circle cx="495" cy="10" r="10" fill="#E2E8F0" />
+    <text x="495" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" text-anchor="middle">5</text>
+    <text x="511" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Rekap</text>
+  </g>
+
+  <!-- Window Controls (Right): Minimize, PiP, Close -->
+  <g id="window-controls" transform="translate(885, 36)">
+    <!-- Minimize Button [-] -->
+    <g id="btn-minimize">
+      <rect x="0" y="0" width="34" height="34" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <line x1="11" y1="17" x2="23" y2="17" stroke="#475569" stroke-width="2" stroke-linecap="round" />
+    </g>
+    <!-- Picture-in-Picture Button [🪟] -->
+    <g id="btn-pip" transform="translate(42, 0)">
+      <rect x="0" y="0" width="34" height="34" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <rect x="9" y="10" width="16" height="13" rx="2" stroke="#475569" stroke-width="1.5" fill="none" />
+      <rect x="15" y="15" width="8" height="6" rx="1" fill="#475569" />
+    </g>
+    <!-- Close Button [×] -->
+    <g id="btn-close" transform="translate(84, 0)">
+      <rect x="0" y="0" width="34" height="34" rx="8" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <line x1="12" y1="12" x2="22" y2="22" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+      <line x1="22" y1="12" x2="12" y2="22" stroke="#475569" stroke-width="1.8" stroke-linecap="round" />
+    </g>
+  </g>
+
+  <!-- ==================== CONTENT BODY ==================== -->
+  <!-- LEFT COLUMN: Camera & Skeleton (480 x 480 px) -->
+  <g id="camera-section" transform="translate(48, 108)">
+    <rect x="0" y="0" width="470" height="470" rx="22" fill="#1E293B" stroke="#334155" stroke-width="1" />
+    
+    <!-- Pose Skeleton Overlay -->
+    <g id="pose-skeleton" stroke="#22C55E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Head / Eyes Line -->
+      <line x1="205" y1="165" x2="265" y2="165" stroke-width="2" />
+      <circle cx="235" cy="180" r="5" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+      <!-- Cervical Spine -->
+      <line x1="235" y1="180" x2="235" y2="245" stroke-width="4" />
+      <!-- Shoulders -->
+      <line x1="140" y1="245" x2="330" y2="245" stroke-width="5" />
+      <!-- Left Arm -->
+      <line x1="140" y1="245" x2="115" y2="350" />
+      <line x1="115" y1="350" x2="95" y2="430" />
+      <!-- Right Arm -->
+      <line x1="330" y1="245" x2="355" y2="350" />
+      <line x1="355" y1="350" x2="375" y2="430" />
+      <!-- Torso -->
+      <line x1="170" y1="245" x2="180" y2="450" />
+      <line x1="300" y1="245" x2="290" y2="450" />
+      
+      <!-- Key Joints -->
+      <circle cx="140" cy="245" r="7" fill="#22C55E" stroke="#FFFFFF" stroke-width="2" />
+      <circle cx="330" cy="245" r="7" fill="#22C55E" stroke="#FFFFFF" stroke-width="2" />
+      <circle cx="115" cy="350" r="5" fill="#22C55E" stroke="#FFFFFF" stroke-width="2" />
+      <circle cx="355" cy="350" r="5" fill="#22C55E" stroke="#FFFFFF" stroke-width="2" />
+    </g>
+
+    <!-- Posture Status Pill (Top-Left) -->
+    <g id="status-badge" transform="translate(18, 18)">
+      <rect x="0" y="0" width="220" height="34" rx="17" fill="#15803D" fill-opacity="0.9" />
+      <circle cx="17" cy="17" r="5" fill="#86EFAC" />
+      <text x="32" y="22" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700">MediaPipe: Tegak Sempurna</text>
+    </g>
+
+    <!-- Bottom Camera Label -->
+    <rect x="18" y="426" width="160" height="26" rx="13" fill="#000000" fill-opacity="0.6" />
+    <text x="28" y="443" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="500">Webcam 30 FPS · AI Aktif</text>
+  </g>
+
+  <!-- RIGHT COLUMN: Metrics & Controls (460 px) -->
+  <g id="controls-section" transform="translate(548, 108)">
+    <!-- Mode Tag -->
+    <rect x="0" y="0" width="140" height="26" rx="8" fill="#FDF2F8" stroke="#FCE7F3" stroke-width="1" />
+    <text x="14" y="17" fill="#DB2777" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" letter-spacing="0.5">MODE DUDUK KERJA</text>
+
+    <!-- Timer Heading -->
+    <text x="0" y="52" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="13" font-weight="600">Postur tegak berturut-turut</text>
+    <text x="0" y="100" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="44" font-weight="800" letter-spacing="-1">14:28</text>
+    <text x="135" y="98" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="500">/ 25m target</text>
+
+    <!-- Progress Bar -->
+    <rect x="0" y="118" width="440" height="8" rx="4" fill="#F1F5F9" />
+    <rect x="0" y="118" width="280" height="8" rx="4" fill="url(#pink-gradient)" />
+
+    <!-- Metric Cards Grid (2x2) -->
+    <g id="metrics-grid" transform="translate(0, 142)">
+      <!-- Card 1: Total Waktu -->
+      <rect x="0" y="0" width="212" height="72" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <text x="16" y="28" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Total Waktu Latihan</text>
+      <text x="16" y="54" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800">18m 10s</text>
+
+      <!-- Card 2: Kepatuhan -->
+      <rect x="228" y="0" width="212" height="72" rx="14" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1" />
+      <text x="244" y="28" fill="#166534" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Skor Kepatuhan</text>
+      <text x="244" y="54" fill="#15803D" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800">89% Tegak</text>
+
+      <!-- Card 3: Poin Didapat -->
+      <rect x="0" y="84" width="212" height="72" rx="14" fill="#FDF4FF" stroke="#F5D0FE" stroke-width="1" />
+      <text x="16" y="112" fill="#86198F" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Poin Terkumpul</text>
+      <text x="16" y="138" fill="#A21CAF" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800">+35 Poin</text>
+
+      <!-- Card 4: Pengingat Suara -->
+      <rect x="228" y="84" width="212" height="72" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      <text x="244" y="112" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Alarm Peringatan</text>
+      <text x="244" y="138" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800">1 Kali</text>
+    </g>
+
+    <!-- Productivity Tip Pill -->
+    <g id="tip-pill" transform="translate(0, 314)">
+      <rect x="0" y="0" width="440" height="52" rx="12" fill="#F0F9FF" stroke="#BAE6FD" stroke-width="1" />
+      <text x="16" y="24" fill="#0284C7" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700">💡 Bebas Buka Tab Lain</text>
+      <text x="16" y="42" fill="#0369A1" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="500">Sistem tetap aktif di background &amp; berbunyi saat Anda bungkuk.</text>
+    </g>
+
+    <!-- Action Buttons -->
+    <g id="action-buttons" transform="translate(0, 388)">
+      <!-- Jeda Button -->
+      <rect x="0" y="0" width="160" height="50" rx="14" fill="#F1F5F9" />
+      <text x="80" y="30" fill="#334155" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="700" text-anchor="middle">⏸️ Ambil Jeda</text>
+
+      <!-- Selesaikan Sesi Button -->
+      <rect x="176" y="0" width="264" height="50" rx="14" fill="url(#pink-gradient)" />
+      <text x="308" y="30" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="700" text-anchor="middle">Selesaikan Latihan</text>
+    </g>
+  </g>
+</svg>

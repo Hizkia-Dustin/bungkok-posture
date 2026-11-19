@@ -1,0 +1,166 @@
+{
+  "challenges": [
+    {
+      "id": "tiga-hari",
+      "title": "Tiga Hari Mulai",
+      "period": "Sejak bergabung",
+      "joinedDate": "",
+      "type": "tersedia",
+      "status": "Tersedia",
+      "description": "Kembali berlatih pada tiga hari berbeda. Satu sesi valid per hari sudah cukup untuk menambah progres.",
+      "requirement": "Satu sesi valid pada tiap hari berbeda dihitung satu kali. Sesi harus selesai, minimal 5 menit valid, dan coverage minimal 70%.",
+      "rewardText": "Hadiah selesai: +15 poin",
+      "rewardValue": "+15 poin",
+      "current": 0,
+      "total": 3,
+      "unit": "hari",
+      "completed": false,
+      "creditedDays": []
+    },
+    {
+      "id": "ingat-jeda",
+      "title": "Ingat Jeda",
+      "period": "Sejak bergabung",
+      "joinedDate": "",
+      "type": "tersedia",
+      "status": "Tersedia",
+      "description": "Ikuti lima pengingat jeda selama latihan.",
+      "requirement": "Ambil jeda saat pengingat muncul, kemudian kembali saat siap. Setelah lima jeda tercatat, badge Ingat Jeda diberikan otomatis satu kali.",
+      "rewardText": "Hadiah: badge Ingat Jeda",
+      "rewardValue": "badge Ingat Jeda",
+      "current": 0,
+      "total": 5,
+      "unit": "jeda",
+      "completed": false,
+      "creditedDays": []
+    },
+    {
+      "id": "kembali-esok",
+      "title": "Kembali Esok",
+      "period": "Sejak bergabung",
+      "type": "tersedia",
+      "status": "Tersedia",
+      "description": "Selesaikan sesi valid pada dua hari berbeda dalam periode tantangan.",
+      "requirement": "Sesi dihitung setelah selesai dan diproses, minimal 5 menit valid dengan coverage minimal 70%. Progres dihitung sejak bergabung dalam periode tantangan.",
+      "rewardText": "Hadiah saat selesai: +10 poin",
+      "rewardValue": "+10 poin",
+      "current": 0,
+      "total": 2,
+      "unit": "hari",
+      "completed": false,
+      "joinedDate": "",
+      "creditedDays": []
+    },
+    {
+      "id": "pengamat-mingguan",
+      "title": "Pengamat Mingguan",
+      "period": "Sejak bergabung",
+      "type": "tersedia",
+      "status": "Tersedia",
+      "description": "Selesaikan lima sesi valid.",
+      "requirement": "Lima sesi minimal 5 menit valid dan coverage 70%.",
+      "rewardText": "Badge Pengamat Mingguan",
+      "rewardValue": "Badge Pengamat Mingguan",
+      "current": 0,
+      "total": 5,
+      "unit": "sesi",
+      "completed": false,
+      "joinedDate": "",
+      "creditedDays": []
+    }
+  ],
+  "badges": [
+    {
+      "id": "kalibrasi-siap",
+      "title": "Kalibrasi Siap",
+      "date": "",
+      "description": "Kalibrasi pertama berhasil.",
+      "icon": "camera",
+      "unlocked": false,
+      "claimed": false,
+      "rewardPoints": 5,
+      "progressText": "Belum diperoleh"
+    },
+    {
+      "id": "langkah-pertama",
+      "title": "Langkah Pertama",
+      "date": "",
+      "description": "Sesi valid pertama selesai.",
+      "icon": "check",
+      "unlocked": false,
+      "claimed": false,
+      "rewardPoints": 10,
+      "progressText": "Belum diperoleh"
+    },
+    {
+      "id": "mulai-konsisten",
+      "title": "Mulai Konsisten",
+      "date": "",
+      "description": "Latihan pada 3 hari berbeda.",
+      "icon": "refresh",
+      "unlocked": false,
+      "claimed": false,
+      "rewardPoints": 15,
+      "progressText": "Belum diperoleh"
+    },
+    {
+      "id": "pengamat-mingguan",
+      "title": "Pengamat Mingguan",
+      "date": "",
+      "description": "Lima sesi valid selesai.",
+      "icon": "check",
+      "unlocked": false,
+      "claimed": false,
+      "rewardPoints": 20,
+      "progressText": "Belum diperoleh"
+    },
+    {
+      "id": "ingat-jeda",
+      "title": "Ingat Jeda",
+      "date": "",
+      "description": "Ikuti 5 pengingat jeda.",
+      "progressText": "Belum diperoleh",
+      "icon": "lock",
+      "unlocked": false,
+      "claimed": false,
+      "rewardPoints": 15
+    }
+  ],
+  "shop": [
+    {
+      "id": "sky-morning",
+      "name": "Sky Morning",
+      "type": "Tema tampilan",
+      "price": 100,
+      "description": "Tema tampilan lembut bernuansa pagi untuk aplikasimu."
+    },
+    {
+      "id": "bingkai-cloud",
+      "name": "Bingkai Cloud",
+      "type": "Bingkai avatar",
+      "price": 150,
+      "description": "Bingkai awan menenangkan di sekeliling avatar profilmu."
+    },
+    {
+      "id": "star-pin",
+      "name": "Star Pin",
+      "type": "Aksesori avatar",
+      "price": 200,
+      "description": "Pin bintang bersinar sebagai tanda dedikasi posturmu."
+    },
+    {
+      "id": "frame-sadar",
+      "name": "Frame Lebih Sadar",
+      "type": "Frame kamera",
+      "price": 180,
+      "description": "Frame editorial DUDUK LEBIH SADAR untuk tampilan kamera latihanmu."
+    },
+    {
+      "id": "frame-turns-on",
+      "name": "Frame Turns On",
+      "type": "Frame kamera",
+      "price": 220,
+      "description": "Frame ungu personal dengan namamu untuk tampilan kamera latihan."
+    }
+  ]
+}

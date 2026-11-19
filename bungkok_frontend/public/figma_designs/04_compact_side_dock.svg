@@ -1,0 +1,75 @@
+<svg width="340" height="480" viewBox="0 0 340 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="dock-shadow" x="0" y="0" width="340" height="480" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="-8" dy="0" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+    <linearGradient id="pink-accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FF72B6" />
+      <stop offset="100%" stop-color="#FF4D99" />
+    </linearGradient>
+  </defs>
+
+  <!-- Side-Dock Container (Rounded on left only) -->
+  <g filter="url(#dock-shadow)">
+    <path d="M20 0C8.95431 0 0 8.95431 0 20V460C0 471.046 8.95431 480 20 480H340V0H20Z" fill="#FFFFFF" />
+  </g>
+
+  <!-- Left Accent Strip -->
+  <path d="M0 20C0 8.95431 8.95431 0 20 0H24V480H20C8.95431 480 0 471.046 0 460V20Z" fill="url(#pink-accent)" />
+
+  <!-- Content Padding Area (x: 40) -->
+  <g transform="translate(44, 28)">
+    <!-- Header -->
+    <text x="0" y="16" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="16" font-weight="800">Panel Monitor Samping</text>
+    <text x="0" y="36" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="500">Memantau tanpa menutupi kerjaan Anda</text>
+
+    <!-- Camera Feed (Vertical 4:5 Aspect) -->
+    <g id="dock-cam" transform="translate(0, 52)">
+      <rect x="0" y="0" width="272" height="180" rx="14" fill="#0F172A" />
+      
+      <!-- Live Wireframe -->
+      <g stroke="#22C55E" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <circle cx="136" cy="55" r="4" fill="#22C55E" stroke="#FFFFFF" stroke-width="1" />
+        <line x1="136" y1="55" x2="136" y2="95" stroke-width="3" />
+        <line x1="80" y1="95" x2="192" y2="95" stroke-width="3.5" />
+        <circle cx="80" cy="95" r="4" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+        <circle cx="192" cy="95" r="4" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+        <line x1="80" y1="95" x2="68" y2="155" />
+        <line x1="192" y1="95" x2="204" y2="155" />
+      </g>
+
+      <!-- Status Pill -->
+      <g transform="translate(10, 10)">
+        <rect x="0" y="0" width="140" height="24" rx="12" fill="#15803D" fill-opacity="0.9" />
+        <circle cx="12" cy="12" r="3.5" fill="#86EFAC" />
+        <text x="22" y="16" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="10.5" font-weight="700">🟢 Tegak Sempurna</text>
+      </g>
+    </g>
+
+    <!-- Metrics Box -->
+    <g id="dock-stats" transform="translate(0, 246)">
+      <rect x="0" y="0" width="272" height="96" rx="14" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" />
+      
+      <g transform="translate(14, 16)">
+        <text x="0" y="14" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Durasi Tegak</text>
+        <text x="244" y="14" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="800" text-anchor="end">24m 12s</text>
+
+        <line x1="0" y1="30" x2="244" y2="30" stroke="#E2E8F0" stroke-width="1" />
+
+        <text x="0" y="52" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="600">Skor Kepatuhan</text>
+        <text x="244" y="52" fill="#16A34A" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="800" text-anchor="end">92% Tegak</text>
+      </g>
+    </g>
+
+    <!-- Controls -->
+    <g transform="translate(0, 356)">
+      <!-- Expand Button -->
+      <rect x="0" y="0" width="272" height="42" rx="12" fill="#F1F5F9" stroke="#E2E8F0" stroke-width="1" />
+      <text x="136" y="26" fill="#334155" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" text-anchor="middle">🔍 Buka Layar Penuh</text>
+
+      <!-- End Button -->
+      <rect x="0" y="50" width="272" height="42" rx="12" fill="#FEE2E2" stroke="#FECACA" stroke-width="1" />
+      <text x="136" y="76" fill="#DC2626" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" text-anchor="middle">⏹️ Selesaikan Sesi</text>
+    </g>
+  </g>
+</svg>

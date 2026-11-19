@@ -1,0 +1,72 @@
+<svg width="440" height="300" viewBox="0 0 440 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Glass Elevation Shadow -->
+    <filter id="glass-shadow" x="0" y="0" width="440" height="300" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.16" />
+    </filter>
+    <!-- Glass Background Gradient -->
+    <linearGradient id="glass-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#F8FAFC" stop-opacity="0.85" />
+    </linearGradient>
+    <!-- Border Glow Gradient -->
+    <linearGradient id="glow-border" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#86EFAC" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="pink-btn" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF72B6" />
+      <stop offset="100%" stop-color="#FF4D99" />
+    </linearGradient>
+  </defs>
+
+  <!-- Glass Container -->
+  <g filter="url(#glass-shadow)">
+    <rect x="15" y="15" width="410" height="270" rx="26" fill="url(#glass-bg)" stroke="url(#glow-border)" stroke-width="2" />
+  </g>
+
+  <!-- Header -->
+  <g id="glass-header" transform="translate(36, 36)">
+    <!-- Brand / Title -->
+    <text x="0" y="16" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="14" font-weight="800">BUNGKOK Posture Guard</text>
+    <!-- Status Pill -->
+    <rect x="250" y="0" width="118" height="24" rx="12" fill="#DCFCE7" stroke="#BBF7D0" stroke-width="1" />
+    <circle cx="262" cy="12" r="4" fill="#16A34A" />
+    <text x="272" y="16" fill="#15803D" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700">Tegak Sempurna</text>
+  </g>
+
+  <!-- Live Video Stream Preview -->
+  <g id="glass-video" transform="translate(36, 72)">
+    <rect x="0" y="0" width="368" height="130" rx="16" fill="#090D16" stroke="#1E293B" stroke-width="1" />
+    <!-- Skeleton representation -->
+    <g stroke="#22C55E" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+      <circle cx="184" cy="40" r="3" fill="#22C55E" />
+      <line x1="184" y1="40" x2="184" y2="75" />
+      <line x1="130" y1="75" x2="238" y2="75" stroke-width="3" />
+      <circle cx="130" cy="75" r="4" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+      <circle cx="238" cy="75" r="4" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+      <line x1="130" y1="75" x2="115" y2="120" />
+      <line x1="238" y1="75" x2="253" y2="120" />
+    </g>
+    <!-- Badge overlay -->
+    <rect x="12" y="96" width="124" height="22" rx="11" fill="#000000" fill-opacity="0.6" />
+    <text x="20" y="111" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="10" font-weight="600">33 Landmarks 3D</text>
+  </g>
+
+  <!-- Bottom Stats & Control -->
+  <g id="glass-footer" transform="translate(36, 218)">
+    <div>
+      <text x="0" y="12" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="10" font-weight="700" letter-spacing="0.5">DURASI TEGAK</text>
+      <text x="0" y="36" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="20" font-weight="800">18m 40s</text>
+    </div>
+    
+    <!-- Mini Action Buttons -->
+    <g transform="translate(198, 4)">
+      <rect x="0" y="0" width="76" height="36" rx="10" fill="#F1F5F9" />
+      <text x="38" y="22" fill="#334155" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" text-anchor="middle">⏸️ Jeda</text>
+
+      <rect x="84" y="0" width="86" height="36" rx="10" fill="url(#pink-btn)" />
+      <text x="127" y="22" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="12" font-weight="700" text-anchor="middle">Selesai</text>
+    </g>
+  </g>
+</svg>

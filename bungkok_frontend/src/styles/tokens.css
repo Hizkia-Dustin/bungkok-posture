@@ -1,0 +1,30 @@
+/* ==========================================================================
+   FONT-FACE / SUMBER TYPEFACE KHUSUS BUNGKOK
+   ========================================================================== */
+@font-face { font-family: Camood; src: url('/fonts/camood.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: Cetrinn; src: url('/fonts/cetrinn.woff2') format('woff2'); font-display: swap; }
+@font-face { font-family: 'Pinyon Script'; src: url('/fonts/pinyon-script.woff2') format('woff2'); font-display: swap; }
+
+/* ==========================================================================
+   DESIGN TOKENS - PUSAT PENGATURAN WARNA FONT & TEMA APLIKASI
+   Ubah nilai hex di bawah ini untuk mengganti warna di SELURUH website!
+   ========================================================================== */
+:root {
+  /* --- WARNA LATAR BELAKANG UMUM --- */
+  --polar: #f5faff;         /* Latar kartu / background putih kebiruan */
+  --blue: #c5e5fb;          /* Aksen biru lembut */
+  --line: #d6e4ef;          /* Garis pembatas border tipis */
+
+  /* --- WARNA FONT (UBAH WARNA TEKS DI SINI) --- */
+  --ink: #203d55;           /* WARNA TEKS UTAMA: Judul h1-h3, angka tebal, label penting */
+  --ink-secondary: #405d73; /* WARNA TEKS KEDUA: Paragraf konten, teks navigasi */
+  --muted: #526b7e;         /* WARNA TEKS KETERANGAN: Teks kecil, tanggal, catatan abu-abu */
+  --pink: #ff4fa3;          /* WARNA TEKS AKSEN / HIGHLIGHT: Tombol aktif, pendaran pink */
+
+  /* --- GRADIEN & BAYANGAN --- */
+  --sky-gradient: linear-gradient(130deg, #b9dff9, #e0f1ff 77%);  /* Kartu biru cerah */
+  --pink-gradient: linear-gradient(156deg, #ff4fa3, #ff70b5 77%); /* Tombol pink & stat */
+  --shell-gradient: linear-gradient(122deg, #ecf7ff, #f5faff 38%, #e5f2fc 77%); /* Latar dashboard */
+  --card-shadow: 0 7px 25px #386e9e13;    /* Bayangan kartu lembut */
+  --button-shadow: 0 5px 12px #ff4fa32b;  /* Bayangan tombol pink */
+}

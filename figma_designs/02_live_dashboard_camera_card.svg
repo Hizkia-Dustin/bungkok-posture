@@ -1,0 +1,82 @@
+<svg width="340" height="260" viewBox="0 0 340 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="card-shadow" x="0" y="0" width="340" height="260" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+    <linearGradient id="live-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF72B6" />
+      <stop offset="100%" stop-color="#FF4D99" />
+    </linearGradient>
+  </defs>
+
+  <!-- Container Card -->
+  <g filter="url(#card-shadow)">
+    <rect x="0" y="0" width="340" height="260" rx="20" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+  </g>
+
+  <!-- ==================== TOP: LIVE WEBCAM FEED (178 px) ==================== -->
+  <rect x="0" y="0" width="340" height="178" rx="20" fill="#0F172A" />
+  <!-- Straight cut bottom corners of video -->
+  <rect x="0" y="158" width="340" height="20" fill="#0F172A" />
+
+  <!-- Simplified Pose Wireframe on Dashboard -->
+  <g id="dash-wireframe" stroke="#22C55E" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+    <circle cx="170" cy="70" r="4" fill="#22C55E" stroke="#FFFFFF" stroke-width="1" />
+    <line x1="170" y1="70" x2="170" y2="110" stroke-width="3" />
+    <line x1="105" y1="110" x2="235" y2="110" stroke-width="3.5" />
+    <circle cx="105" cy="110" r="5" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+    <circle cx="235" cy="110" r="5" fill="#22C55E" stroke="#FFFFFF" stroke-width="1.5" />
+    <!-- Arms -->
+    <line x1="105" y1="110" x2="90" y2="165" />
+    <line x1="235" y1="110" x2="250" y2="165" />
+  </g>
+
+  <!-- Live Status Pill (Top-Left) -->
+  <g id="live-pill" transform="translate(12, 12)">
+    <rect x="0" y="0" width="168" height="26" rx="13" fill="#15803D" fill-opacity="0.95" />
+    <circle cx="13" cy="13" r="4" fill="#86EFAC">
+      <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
+    </circle>
+    <text x="24" y="17" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700">● Live · Tegak Sempurna</text>
+  </g>
+
+  <!-- Floating Action Buttons (Bottom-Right of Video) -->
+  <g id="quick-actions" transform="translate(162, 136)">
+    <!-- Maximize Button -->
+    <rect x="0" y="0" width="82" height="28" rx="8" fill="#FFFFFF" fill-opacity="0.92" />
+    <text x="41" y="18" fill="#1E293B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" text-anchor="middle">🔍 Layar Penuh</text>
+
+    <!-- Pause Button -->
+    <rect x="88" y="0" width="78" height="28" rx="8" fill="#FFFFFF" fill-opacity="0.92" />
+    <text x="127" y="18" fill="#1E293B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="700" text-anchor="middle">⏸️ Jeda</text>
+  </g>
+
+  <!-- ==================== BOTTOM: 3 LIVE METRICS ==================== -->
+  <g id="metrics-row" transform="translate(0, 178)">
+    <line x1="0" y1="0" x2="340" y2="0" stroke="#F1F5F9" stroke-width="1.5" />
+
+    <!-- Col 1: Waktu Valid -->
+    <g transform="translate(0, 16)">
+      <text x="56" y="22" fill="#0F172A" font-family="Plus Jakarta Sans, sans-serif" font-size="18" font-weight="800" text-anchor="middle">14.8m</text>
+      <text x="56" y="42" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Waktu valid</text>
+    </g>
+
+    <!-- Divider 1 -->
+    <line x1="113" y1="16" x2="113" y2="66" stroke="#F1F5F9" stroke-width="1" />
+
+    <!-- Col 2: Persentase Tegak -->
+    <g transform="translate(113, 16)">
+      <text x="57" y="22" fill="#FF4D99" font-family="Plus Jakarta Sans, sans-serif" font-size="18" font-weight="800" text-anchor="middle">88%</text>
+      <text x="57" y="42" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Tegak</text>
+    </g>
+
+    <!-- Divider 2 -->
+    <line x1="227" y1="16" x2="227" y2="66" stroke="#F1F5F9" stroke-width="1" />
+
+    <!-- Col 3: Poin Didapat -->
+    <g transform="translate(227, 16)">
+      <text x="56" y="22" fill="#15803D" font-family="Plus Jakarta Sans, sans-serif" font-size="18" font-weight="800" text-anchor="middle">+35</text>
+      <text x="56" y="42" fill="#64748B" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Poin dapat</text>
+    </g>
+  </g>
+</svg>

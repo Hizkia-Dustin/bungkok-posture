@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BUNGKOK Posture Studio - Dual Mode</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --bg: #0b0f12;
+      --card-bg: #141c21;
+      --card-border: #22313a;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.25);
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #22c55e, #06b6d4);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      color: #051510;
+      font-size: 20px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #19252c;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid #2d3e47;
+      font-size: 13px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+    .status-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    main {
+      width: min(1280px, 95vw);
+      margin: 24px auto;
+      flex: 1;
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+
+    /* Mode selector pill */
+    .mode-selector {
+      display: flex;
+      gap: 8px;
+      background: #0d1418;
+      padding: 5px;
+      border-radius: 14px;
+      border: 1px solid #212c33;
+      margin-bottom: 16px;
+    }
+    .mode-btn {
+      flex: 1;
+      border: 0;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-sub);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all .2s;
+    }
+    .mode-btn.active {
+      background: #25333a;
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* Video & Canvas Overlay */
+    .stage-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #06090a;
+      border: 2px solid var(--card-border);
+      transition: border-color .3s;
+    }
+    .stage-container.state-ok { border-color: var(--accent); }
+    .stage-container.state-warn { border-color: var(--warn); }
+    .stage-container.state-bad { border-color: var(--bad); }
+
+    video, canvas.stage-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* mirror */
+    }
+    canvas.stage-canvas {
+      pointer-events: none;
+    }
+
+    /* Guide overlay outline */
+    .guide-silhouette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.18;
+      transition: opacity .3s;
+    }
+    .guide-silhouette svg {
+      width: 55%;
+      height: 55%;
+      stroke: #fff;
+      stroke-dasharray: 6 6;
+      fill: none;
+    }
+
+    /* Countdown overlay */
+    .countdown-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(11, 15, 18, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .countdown-overlay.show { display: flex; }
+    .countdown-number {
+      font-size: clamp(72px, 12vw, 120px);
+      font-weight: 900;
+      color: var(--accent);
+      text-shadow: 0 0 30px var(--accent);
+      animation: pulse 1s infinite alternate;
+    }
+    .countdown-text {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 10px;
+      color: #e2e8f0;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); }
+      100% { transform: scale(1.08); }
+    }
+
+    /* Stage HUD pills */
+    .stage-hud {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .hud-pill {
+      background: rgba(15, 23, 28, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Action bar controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .2s;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #061910;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    button.primary:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+    button.secondary {
+      background: #25333a;
+      color: #e2e8f0;
+    }
+    button.secondary:hover:not(:disabled) {
+      background: #304149;
+    }
+    button.danger {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Right column panels */
+    .panel-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+      margin: 0 0 12px;
+      font-weight: 700;
+    }
+
+    .status-banner {
+      background: #0f161a;
+      border-radius: 16px;
+      padding: 18px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 20px;
+    }
+    .status-heading {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 0 0 6px;
+    }
+    .status-msg {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Training Dashboard */
+    .training-dashboard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: #0e1519;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #f8fafc;
+      font-feature-settings: "tnum";
+    }
+    .stat-lbl {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    /* Instruction steps */
+    .instruction-steps {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #23323a;
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 12px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Sound toggle */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-top: 1px solid var(--card-border);
+      font-size: 13px;
+    }
+
+    details {
+      margin-top: 16px;
+      background: #090e10;
+      border-radius: 12px;
+      padding: 10px 14px;
+      border: 1px solid #1a252b;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+    pre {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 11px;
+      color: #94a3b8;
+      margin: 10px 0 0;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .color-ok { color: var(--accent); }
+    .color-warn { color: var(--warn); }
+    .color-bad { color: var(--bad); }
+
+    @media (max-width: 860px) {
+      .layout-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">B</div>
+      <div>
+        <h1>BUNGKOK Posture Studio</h1>
+        <p>Klasifikasi Postur Realtime • Dual Mode (Webcam Depan & Kamera Samping)</p>
+      </div>
+    </div>
+    <div class="header-badge">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="backendBadge">Menghubungkan backend...</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout-grid">
+      <!-- Left Column: Camera Stage & Live Wireframe -->
+      <section class="card">
+        <!-- Mode Switcher -->
+        <div class="mode-selector">
+          <button id="modeUpper" class="mode-btn active" type="button">
+            💻 Webcam Depan (Kepala, Leher, Bahu)
+          </button>
+          <button id="modeFull" class="mode-btn" type="button">
+            📐 Kamera Samping (Full Body / Punggung)
+          </button>
+        </div>
+
+        <!-- Video & Skeleton Container -->
+        <div id="stageContainer" class="stage-container">
+          <video id="camera" autoplay playsinline muted></video>
+          <canvas id="stageCanvas" class="stage-canvas"></canvas>
+          <canvas id="offscreenCanvas" hidden></canvas>
+
+          <!-- Alignment Silhouette Guide -->
+          <div id="guideSilhouette" class="guide-silhouette">
+            <svg viewBox="0 0 200 200">
+              <!-- Head circle -->
+              <circle cx="100" cy="55" r="28" stroke-width="2.5" />
+              <!-- Neck & Shoulders -->
+              <path d="M 100 83 L 100 102 M 45 125 Q 100 102 155 125" stroke-width="2.5" />
+            </svg>
+          </div>
+
+          <!-- Countdown Overlay -->
+          <div id="countdownOverlay" class="countdown-overlay">
+            <div id="countdownNumber" class="countdown-number">3</div>
+            <div class="countdown-text">Pertahankan postur tegak...</div>
+          </div>
+
+          <!-- Stage HUD -->
+          <div class="stage-hud">
+            <div class="hud-pill">
+              <span id="skeletonDot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
+              <span id="skeletonStatus">Kerangka: Siap</span>
+            </div>
+            <div id="alignmentBadge" class="hud-pill" style="display:none;">
+              ✨ Posisi Tegak
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="controls">
+          <button id="startBtn" class="primary">
+            ▶ 1. Nyalakan Kamera
+          </button>
+          <button id="autoCalibrateBtn" class="secondary" disabled>
+            ⚡ Kalibrasi Otomatis (Hitung Mundur)
+          </button>
+          <button id="stopBtn" class="danger" disabled>
+            ⏹ Berhenti
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Column: Training Dashboard & Feedback -->
+      <aside class="card">
+        <h3 class="panel-title">Status Postur & Pelatihan</h3>
+
+        <div class="status-banner">
+          <div id="mainLabel" class="status-heading">Belum Siap</div>
+          <p id="mainStatus" class="status-msg">Nyalakan kamera untuk mengaktifkan pelacak kerangka tulang tubuh.</p>
+        </div>
+
+        <!-- Training Dashboard (Active during Training mode) -->
+        <div id="trainingDash" class="training-dashboard">
+          <div class="stat-card">
+            <div id="trainTimer" class="stat-val">00:00</div>
+            <div class="stat-lbl">Durasi Latihan</div>
+          </div>
+          <div class="stat-card">
+            <div id="postureScore" class="stat-val">100%</div>
+            <div class="stat-lbl">Skor Tegak</div>
+          </div>
+          <div class="stat-card">
+            <div id="uprightDuration" class="stat-val">00:00</div>
+            <div class="stat-lbl">Waktu Tegak</div>
+          </div>
+          <div class="stat-card">
+            <div id="slouchAlertCount" class="stat-val">0</div>
+            <div class="stat-lbl">Teguran Bungkuk</div>
+          </div>
+        </div>
+
+        <ul class="instruction-steps">
+          <li class="step-item">
+            <div class="step-num">1</div>
+            <div><strong>Webcam Depan:</strong> Duduk menghadap kamera. Pastikan kepala, leher, dan kedua bahu terlihat di layar.</div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">2</div>
+            <div><strong>Deteksi Tulang Realtime:</strong> Garis tulang hijau berarti postur tegak. Garis oranye/merah berarti bungkuk atau miring.</div>
+          </li>
+          <li class="step-item">
+            <div class="step-num">3</div>
+            <div><strong>Hitung Mundur Otomatis:</strong> Duduk tegak dengan stabil. Hitung mundur 3 detik akan otomatis berjalan dan memulai pelatihan.</div>
+          </li>
+        </ul>
+
+        <div class="toggle-row">
+          <span>🔊 Suara Peringatan Audio</span>
+          <label style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="soundToggle" checked> Aktif
+          </label>
+        </div>
+
+        <details>
+          <summary>🔍 Data Debug & Metrik Backend</summary>
+          <pre id="debugOutput">Menunggu respons...</pre>
+        </details>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    // State & DOM
+    let currentMode = 'upper_body'; // 'upper_body' or 'full_torso'
+    let stream = null;
+    let calibrationId = null;
+    let isDetecting = false;
+    let isTraining = false;
+    let detectLoopTimer = null;
+    let requestInFlight = false;
+
+    // Countdown & Training State
+    let uprightStreakCount = 0; // count consecutive upright frames
+    let countdownActive = false;
+    let countdownVal = 3;
+    let countdownInterval = null;
+
+    let trainingStartTime = null;
+    let totalUprightSeconds = 0;
+    let totalSlouchSeconds = 0;
+    let slouchAlertCounter = 0;
+    let slouchConsecutiveFrames = 0;
+    let trainingTicker = null;
+
+    // Elements
+    const video = document.querySelector('#camera');
+    const stageCanvas = document.querySelector('#stageCanvas');
+    const ctx = stageCanvas.getContext('2d');
+    const offscreen = document.querySelector('#offscreenCanvas');
+    const stageContainer = document.querySelector('#stageContainer');
+
+    const modeUpperBtn = document.querySelector('#modeUpper');
+    const modeFullBtn = document.querySelector('#modeFull');
+    const startBtn = document.querySelector('#startBtn');
+    const autoCalibrateBtn = document.querySelector('#autoCalibrateBtn');
+    const stopBtn = document.querySelector('#stopBtn');
+
+    const countdownOverlay = document.querySelector('#countdownOverlay');
+    const countdownNumber = document.querySelector('#countdownNumber');
+    const alignmentBadge = document.querySelector('#alignmentBadge');
+    const skeletonDot = document.querySelector('#skeletonDot');
+    const skeletonStatus = document.querySelector('#skeletonStatus');
+
+    const mainLabel = document.querySelector('#mainLabel');
+    const mainStatus = document.querySelector('#mainStatus');
+    const statusDot = document.querySelector('#statusDot');
+    const backendBadge = document.querySelector('#backendBadge');
+
+    const trainTimer = document.querySelector('#trainTimer');
+    const postureScore = document.querySelector('#postureScore');
+    const uprightDuration = document.querySelector('#uprightDuration');
+    const slouchAlertCount = document.querySelector('#slouchAlertCount');
+    const soundToggle = document.querySelector('#soundToggle');
+    const debugOutput = document.querySelector('#debugOutput');
+
+    // Audio synthesizer for audio feedback
+    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    function playTone(freq, type = 'sine', duration = 0.15) {
+      if (!soundToggle.checked) return;
+      try {
+        if (!audioCtx) audioCtx = new AudioCtxClass();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio play error:', e);
+      }
+    }
+
+    function playSuccessChime() {
+      playTone(523.25, 'triangle', 0.12);
+      setTimeout(() => playTone(659.25, 'triangle', 0.12), 120);
+      setTimeout(() => playTone(783.99, 'triangle', 0.25), 240);
+    }
+
+    function playSlouchAlert() {
+      playTone(330, 'sawtooth', 0.2);
+      setTimeout(() => playTone(280, 'sawtooth', 0.25), 200);
+    }
+
+    // Format seconds to mm:ss
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    // Set UI status text and colors
+    function setBanner(title, desc, kind = '') {
+      mainLabel.textContent = title;
+      mainStatus.textContent = desc;
+      mainLabel.className = `status-heading ${kind ? 'color-' + kind : ''}`;
+      stageContainer.className = `stage-container ${kind ? 'state-' + kind : ''}`;
+    }
+
+    // Mode Switcher Events
+    modeUpperBtn.addEventListener('click', () => {
+      currentMode = 'upper_body';
+      modeUpperBtn.classList.add('active');
+      modeFullBtn.classList.remove('active');
+      setBanner('Mode Webcam Depan', 'Fokus mendeteksi kepala, leher, dan bahu. Sangat cocok di meja laptop.', 'ok');
+    });
+
+    modeFullBtn.addEventListener('click', () => {
+      currentMode = 'full_torso';
+      modeFullBtn.classList.add('active');
+      modeUpperBtn.classList.remove('active');
+      setBanner('Mode Kamera Samping', 'Membutuhkan sudut pandang bahu, pinggul, dan bagian lutut terlihat.', 'warn');
+    });
+
+    // Check Backend Health
+    fetch('/api/health')
+      .then(res => res.json())
+      .then(data => {
+        statusDot.classList.add('active');
+        backendBadge.textContent = `${data.model} (${data.model_version})`;
+        debugOutput.textContent = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        backendBadge.textContent = 'Backend Offline';
+        debugOutput.textContent = err.message;
+      });
+
+    // Camera Capture Blob
+    function captureBlob(quality = 0.82) {
+      offscreen.width = video.videoWidth || 640;
+      offscreen.height = video.videoHeight || 480;
+      const octx = offscreen.getContext('2d');
+      octx.drawImage(video, 0, 0, offscreen.width, offscreen.height);
+      return new Promise((resolve, reject) => {
+        offscreen.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal capture frame')), 'image/jpeg', quality);
+      });
+    }
+
+    // Start Camera
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          audio: false,
+        });
+        video.srcObject = stream;
+        await video.play();
+
+        // Match canvas coordinate size to video
+        stageCanvas.width = video.videoWidth || 1280;
+        stageCanvas.height = video.videoHeight || 720;
+
+        startBtn.disabled = true;
+        autoCalibrateBtn.disabled = false;
+        stopBtn.disabled = false;
+
+        setBanner('Kamera Aktif', 'Posisikan tubuh Anda di depan kamera. Kerangka realtime sedang dianalisis...', 'ok');
+        startDetectionLoop();
+      } catch (err) {
+        setBanner('Kamera Gagal', err.message, 'bad');
+      }
+    }
+
+    // Realtime Detection Loop (Live Skeleton & Upright Detection)
+    function startDetectionLoop() {
+      isDetecting = true;
+      if (detectLoopTimer) clearInterval(detectLoopTimer);
+      detectLoopTimer = setInterval(detectFrame, 220); // ~4-5 fps API calls for lightweight real-time
+    }
+
+    async function detectFrame() {
+      if (!isDetecting || requestInFlight || countdownActive) return;
+      if (!video.videoWidth || video.paused) return;
+
+      requestInFlight = true;
+      try {
+        const blob = await captureBlob(0.8);
+        const form = new FormData();
+        form.append('image', blob, 'frame.jpg');
+        form.append('camera_mode', currentMode);
+
+        if (isTraining && calibrationId) {
+          // If training is active, call /api/predict
+          form.append('calibration_id', calibrationId);
+          const res = await fetch('/api/predict', { method: 'POST', body: form });
+          const data = await res.json();
+          handlePredictResult(data);
+        } else {
+          // Pre-calibration: call /api/detect for live skeleton & upright alignment
+          const res = await fetch('/api/detect', { method: 'POST', body: form });
+          const data = await res.json();
+          handleDetectResult(data);
+        }
+      } catch (err) {
+        console.warn('Loop error:', err);
+      } finally {
+        requestInFlight = false;
+      }
+    }
+
+    // Smooth Landmark EMA Buffer
+    let smoothedLandmarks = null;
+    const SMOOTH_ALPHA = 0.65; // 0.65 current + 0.35 previous
+
+    function getSmoothedLandmarks(rawLandmarks) {
+      if (!rawLandmarks || rawLandmarks.length === 0) {
+        smoothedLandmarks = null;
+        return null;
+      }
+      if (!smoothedLandmarks || smoothedLandmarks.length !== rawLandmarks.length) {
+        smoothedLandmarks = rawLandmarks.map(p => ({ ...p }));
+        return smoothedLandmarks;
+      }
+      for (let i = 0; i < rawLandmarks.length; i++) {
+        const cur = rawLandmarks[i];
+        const prev = smoothedLandmarks[i];
+        prev.x = SMOOTH_ALPHA * cur.x + (1 - SMOOTH_ALPHA) * prev.x;
+        prev.y = SMOOTH_ALPHA * cur.y + (1 - SMOOTH_ALPHA) * prev.y;
+        prev.z = SMOOTH_ALPHA * cur.z + (1 - SMOOTH_ALPHA) * prev.z;
+        prev.visibility = cur.visibility;
+      }
+      return smoothedLandmarks;
+    }
+
+    // Rolling Prediction History for Temporal Smoothing (Majority Voting)
+    const predictionHistory = [];
+    const HISTORY_WINDOW = 5;
+
+    function getSmoothedPrediction(newPred) {
+      predictionHistory.push(newPred);
+      if (predictionHistory.length > HISTORY_WINDOW) predictionHistory.shift();
+
+      const counts = {};
+      for (const p of predictionHistory) {
+        counts[p] = (counts[p] || 0) + 1;
+      }
+      let dominant = newPred;
+      let maxCount = 0;
+      for (const [p, c] of Object.entries(counts)) {
+        if (c > maxCount) {
+          maxCount = c;
+          dominant = p;
+        }
+      }
+      return maxCount >= 3 ? dominant : (predictionHistory[0] || newPred);
+    }
+
+    // Draw Skeleton Wireframe onto Canvas with EMA Smoothing
+    function drawSkeleton(rawLandmarks, statusColor = '#22c55e') {
+      ctx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
+      const landmarks = getSmoothedLandmarks(rawLandmarks);
+      if (!landmarks || landmarks.length === 0) {
+        skeletonDot.style.background = '#64748b';
+        skeletonStatus.textContent = 'Kerangka: Tidak terlihat';
+        return;
+      }
+
+      skeletonDot.style.background = statusColor;
+      skeletonStatus.textContent = 'Kerangka: Terdeteksi';
+
+      const w = stageCanvas.width;
+      const h = stageCanvas.height;
+
+      // Draw connection lines
+      function line(i, j) {
+        const a = landmarks[i];
+        const b = landmarks[j];
+        if (!a || !b) return;
+        if ((a.visibility || 0) < 0.25 || (b.visibility || 0) < 0.25) return;
+        ctx.beginPath();
+        ctx.moveTo(a.x * w, a.y * h);
+        ctx.lineTo(b.x * w, b.y * h);
+        ctx.strokeStyle = statusColor;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+
+      // Upper body bones
+      line(0, 1); line(1, 2); line(2, 3); line(3, 7); // left face
+      line(0, 4); line(4, 5); line(5, 6); line(6, 8); // right face
+      line(11, 12); // shoulders
+
+      // Mid shoulder to nose (cervical spine vector)
+      const ls = landmarks[11];
+      const rs = landmarks[12];
+      const nose = landmarks[0];
+      if (ls && rs && nose) {
+        const mx = (ls.x + rs.x) / 2 * w;
+        const my = (ls.y + rs.y) / 2 * h;
+        ctx.beginPath();
+        ctx.moveTo(nose.x * w, nose.y * h);
+        ctx.lineTo(mx, my);
+        ctx.strokeStyle = statusColor;
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+
+      // Arms
+      line(11, 13); line(13, 15);
+      line(12, 14); line(14, 16);
+
+      // Torso & Legs (if full_torso mode)
+      if (currentMode === 'full_torso' || (landmarks[23] && landmarks[23].visibility > 0.3)) {
+        line(11, 23); line(12, 24); line(23, 24);
+        line(23, 25); line(24, 26);
+      }
+
+      // Draw Joint Dots
+      const activeJoints = [0, 7, 8, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26];
+      for (const idx of activeJoints) {
+        const pt = landmarks[idx];
+        if (!pt || (pt.visibility || 0) < 0.25) continue;
+        ctx.beginPath();
+        ctx.arc(pt.x * w, pt.y * h, 6, 0, Math.PI * 2);
+        ctx.fillStyle = statusColor;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+      }
+    }
+
+    // Handle Pre-Calibration Detection
+    function handleDetectResult(data) {
+      debugOutput.textContent = JSON.stringify(data, null, 2);
+
+      if (data.status === 'ok') {
+        const isUpright = data.is_upright;
+        const color = isUpright ? '#22c55e' : '#f59e0b';
+        drawSkeleton(data.landmarks, color);
+
+        if (isUpright) {
+          alignmentBadge.style.display = 'inline-flex';
+          alignmentBadge.style.background = 'rgba(34, 197, 94, 0.2)';
+          alignmentBadge.style.borderColor = '#22c55e';
+          alignmentBadge.textContent = '✨ Posisi Pas & Tegak!';
+          setBanner('Posisi Pas & Tegak', data.alignment_feedback || 'Bagus! Pertahankan posisi ini untuk kalibrasi.', 'ok');
+
+          uprightStreakCount++;
+          // Trigger countdown after maintaining upright posture steadily
+          if (uprightStreakCount >= 3 && !countdownActive) {
+            triggerAutoCountdown();
+          }
+        } else {
+          alignmentBadge.style.display = 'inline-flex';
+          alignmentBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+          alignmentBadge.style.borderColor = '#f59e0b';
+          alignmentBadge.textContent = '⚠️ Belum Pas';
+          uprightStreakCount = 0;
+          setBanner('Sesuaikan Postur', data.alignment_feedback || 'Sejajarkan bahu dan tegakkan leher Anda.', 'warn');
+        }
+      } else {
+        alignmentBadge.style.display = 'none';
+        uprightStreakCount = 0;
+        drawSkeleton(data.landmarks || [], '#ef4444');
+        setBanner('Objek Belum Terbaca', data.reason || 'Pastikan tubuh Anda berada di dalam frame kamera.', 'bad');
+      }
+    }
+
+    // Trigger Countdown (3, 2, 1) then Auto Calibrate
+    function triggerAutoCountdown() {
+      if (countdownActive) return;
+      countdownActive = true;
+      countdownVal = 3;
+      countdownOverlay.classList.add('show');
+      countdownNumber.textContent = countdownVal;
+      playTone(440, 'sine', 0.15); // tick tone
+
+      countdownInterval = setInterval(async () => {
+        countdownVal--;
+        if (countdownVal > 0) {
+          countdownNumber.textContent = countdownVal;
+          playTone(440, 'sine', 0.15);
+        } else {
+          clearInterval(countdownInterval);
+          countdownNumber.textContent = '📸';
+          playSuccessChime();
+          await performCalibration();
+          countdownOverlay.classList.remove('show');
+          countdownActive = false;
+        }
+      }, 1000);
+    }
+
+    // Button manual trigger countdown
+    autoCalibrateBtn.addEventListener('click', () => {
+      triggerAutoCountdown();
+    });
+
+    // Calibration Execution
+    async function performCalibration() {
+      setBanner('Mengambil Kalibrasi...', 'Mengumpulkan baseline postur tegak Anda...', 'ok');
+      try {
+        const form = new FormData();
+        form.append('camera_mode', currentMode);
+        for (let i = 1; i <= 3; i++) {
+          const blob = await captureBlob(0.88);
+          form.append('images', blob, `upright_${i}.jpg`);
+          await new Promise(r => setTimeout(r, 200));
+        }
+
+        const res = await fetch('/api/calibrations', { method: 'POST', body: form });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.detail || 'Kalibrasi gagal');
+
+        calibrationId = result.calibration_id;
+        debugOutput.textContent = JSON.stringify(result, null, 2);
+        setBanner('Kalibrasi Berhasil!', 'Baseline tersimpan. Memulai fitur pelatihan postur...', 'ok');
+
+        // Automatically launch posture training mode!
+        startTrainingSession();
+      } catch (err) {
+        setBanner('Kalibrasi Gagal', err.message, 'bad');
+        playTone(200, 'square', 0.4);
+      }
+    }
+
+    // Start Training Session
+    function startTrainingSession() {
+      isTraining = true;
+      trainingStartTime = Date.now();
+      totalUprightSeconds = 0;
+      totalSlouchSeconds = 0;
+      slouchAlertCounter = 0;
+      slouchConsecutiveFrames = 0;
+
+      autoCalibrateBtn.disabled = true;
+      alignmentBadge.style.display = 'none';
+
+      if (trainingTicker) clearInterval(trainingTicker);
+      trainingTicker = setInterval(updateTrainingStats, 1000);
+
+      setBanner('Pelatihan Postur Aktif', 'Pertahankan postur tegak. Sistem akan memantau dan memberi notifikasi.', 'ok');
+    }
+
+    // Handle Prediction Result during Training
+    function handlePredictResult(data) {
+      debugOutput.textContent = JSON.stringify(data, null, 2);
+
+      if (data.status === 'ok') {
+        const rawPred = data.prediction;
+        const pred = getSmoothedPrediction(rawPred);
+        let color = '#22c55e';
+        let statusText = 'Tegak Sempurna';
+        let kind = 'ok';
+
+        let desc = 'Sesi pelatihan sedang berjalan.';
+        alignmentBadge.style.display = 'inline-flex';
+
+        if (data.upper_is_arm_activity) {
+          color = '#38bdf8'; // sky blue for arm stretching
+          statusText = 'Peregangan Tangan Terdeteksi';
+          desc = 'Gerakan/peregangan tangan terdeteksi, postur kepala tetap tegak.';
+          kind = 'ok';
+          slouchConsecutiveFrames = 0;
+          alignmentBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+          alignmentBadge.style.borderColor = '#38bdf8';
+          alignmentBadge.textContent = '🙆 Peregangan Santai';
+        } else if (pred === 'tegak') {
+          color = '#22c55e';
+          statusText = 'Tegak Sempurna';
+          desc = 'Pertahankan postur tegak ini.';
+          kind = 'ok';
+          slouchConsecutiveFrames = 0;
+          alignmentBadge.style.background = 'rgba(34, 197, 94, 0.2)';
+          alignmentBadge.style.borderColor = '#22c55e';
+          alignmentBadge.textContent = '✨ Postur Tegak';
+        } else if (pred === 'condong_depan') {
+          color = '#ef4444';
+          statusText = (data.cervical_angle_deg && data.cervical_angle_deg > 16.0) ? 'Condong Depan (Kepala Terlalu Maju)' : 'Condong Depan (Bungkuk)';
+          desc = (data.cervical_angle_deg && data.cervical_angle_deg > 16.0) 
+            ? 'Leher/kepala Anda terlalu maju ke depan (Turtle Neck). Tarik dagu sejajar bahu.' 
+            : 'Postur membungkuk ke depan. Tegakkan kembali leher dan bahu.';
+          kind = 'bad';
+          slouchConsecutiveFrames++;
+          alignmentBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+          alignmentBadge.style.borderColor = '#ef4444';
+          alignmentBadge.textContent = '⚠️ Bungkuk / Turtle Neck';
+        } else if (pred === 'condong_belakang') {
+          color = '#f59e0b';
+          statusText = 'Condong Belakang / Mendongak';
+          desc = 'Posisi Anda terlalu mendongak atau rebahan ke belakang. Posisikan tubuh seimbang.';
+          kind = 'warn';
+          slouchConsecutiveFrames++;
+          alignmentBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+          alignmentBadge.style.borderColor = '#f59e0b';
+          alignmentBadge.textContent = '⚠️ Mendongak / Rebahan';
+        }
+
+        // Sound alert if slouching persists for >= 4 frames (~1.5-2 seconds continuous)
+        if (slouchConsecutiveFrames === 4) {
+          slouchAlertCounter++;
+          slouchAlertCount.textContent = slouchAlertCounter;
+          playSlouchAlert();
+        }
+
+        drawSkeleton(data.landmarks, color);
+        setBanner(statusText, desc, kind);
+      } else {
+        drawSkeleton(data.landmarks || [], '#ef4444');
+        setBanner('Input Ditolak', data.reason || 'Wajah/bahu tidak terdeteksi.', 'bad');
+      }
+    }
+
+    // Update Live Training Stopwatch & Statistics
+    function updateTrainingStats() {
+      if (!isTraining || !trainingStartTime) return;
+      const elapsedSec = Math.floor((Date.now() - trainingStartTime) / 1000);
+      trainTimer.textContent = fmtTime(elapsedSec);
+
+      // Read current state to accumulate upright vs slouch time
+      if (mainLabel.textContent.includes('Tegak')) {
+        totalUprightSeconds++;
+      } else {
+        totalSlouchSeconds++;
+      }
+
+      uprightDuration.textContent = fmtTime(totalUprightSeconds);
+
+      const totalActive = totalUprightSeconds + totalSlouchSeconds;
+      const score = totalActive > 0 ? Math.round((totalUprightSeconds / totalActive) * 100) : 100;
+      postureScore.textContent = `${score}%`;
+      postureScore.style.color = score >= 80 ? '#22c55e' : (score >= 50 ? '#f59e0b' : '#ef4444');
+    }
+
+    // Stop Everything
+    async function stopAll() {
+      isDetecting = false;
+      isTraining = false;
+      countdownActive = false;
+
+      if (detectLoopTimer) clearInterval(detectLoopTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+      if (trainingTicker) clearInterval(trainingTicker);
+
+      detectLoopTimer = null;
+      countdownInterval = null;
+      trainingTicker = null;
+      requestInFlight = false;
+
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      ctx.clearRect(0, 0, stageCanvas.width, stageCanvas.height);
+
+      if (calibrationId) {
+        fetch(`/api/calibrations/${calibrationId}`, { method: 'DELETE', keepalive: true }).catch(() => {});
+        calibrationId = null;
+      }
+
+      startBtn.disabled = false;
+      autoCalibrateBtn.disabled = true;
+      stopBtn.disabled = true;
+      countdownOverlay.classList.remove('show');
+      alignmentBadge.style.display = 'none';
+
+      setBanner('Berhenti', 'Kamera dan sesi pelatihan telah dinonaktifkan.');
+    }
+
+    startBtn.addEventListener('click', startCamera);
+    stopBtn.addEventListener('click', stopAll);
+    window.addEventListener('beforeunload', stopAll);
+  </script>
+</body>
+</html>

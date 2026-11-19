@@ -1,0 +1,75 @@
+{
+  "model_name": "BUNGKOK_BACKEND_V3_CALIBRATED",
+  "status": "BACKEND_CANDIDATE_REQUIRES_NEW_REAL_HOLDOUT",
+  "version": "3.5.0-head-activity-tolerance",
+  "supported_modes": ["upper_body", "full_torso", "auto"],
+  "labels": {
+    "0": "tegak",
+    "1": "condong_depan",
+    "2": "condong_belakang"
+  },
+  "calibration": {
+    "required": true,
+    "pose": "tegak",
+    "minimum_images": 3,
+    "aggregation": "median",
+    "camera_must_remain_fixed": true
+  },
+  "upper_body_thresholds": {
+    "min_upper_visibility": 0.35,
+    "max_shoulder_roll": 0.12,
+    "max_shoulder_roll_deg": 8.0,
+    "max_head_tilt_relative_deg": 16.5,
+    "min_neck_ratio": 0.35,
+    "max_cervical_angle_upright": 18.0,
+    "max_ear_forward_z_upright": 0.062,
+    "max_nose_forward_z_upright": 0.180,
+    "min_pitch_ratio_upright": 0.78,
+    "max_pitch_ratio_upright": 1.28,
+    "head_activity_center_offset": 0.10,
+    "head_activity_max_shoulder_roll_deg": 10.0,
+    "head_activity_min_neck_drop_ratio": -0.22,
+    "head_activity_max_nose_z_delta": 0.085,
+    "head_activity_max_ear_z_delta": 0.060,
+    "severe_forward_neck_drop_ratio": -0.28,
+    "severe_forward_nose_z_delta": 0.10,
+    "severe_forward_ear_z_delta": 0.075,
+    "forward_cervical_angle_delta": 14.0,
+    "forward_ear_z_delta": 0.045,
+    "forward_nose_z_delta": 0.065,
+    "forward_neck_drop_ratio": -0.14,
+    "max_cervical_angle_absolute": 21.5,
+    "max_ear_forward_z_absolute": 0.068,
+    "backward_cervical_angle_delta": -5.0,
+    "backward_ear_z_delta": -0.035
+  },
+  "thresholds": {
+    "backward_delta_max": -0.12,
+    "forward_delta_low": 0.21,
+    "forward_delta_high": 0.30,
+    "forward_vertical_guard": 1.15
+  },
+  "guards": {
+    "exact_pose_count": 1,
+    "minimum_torso_visibility": 0.5,
+    "minimum_knee_visibility": 0.05,
+    "standing_knee_visibility": 0.8,
+    "standing_hip_angle_degrees": 155.0
+  },
+  "supported_input": {
+    "person_count": 1,
+    "body_position": "duduk",
+    "camera_angles": ["depan", "hingga_45_derajat_kiri_atau_kanan", "samping_eksternal"],
+    "unsupported": ["berdiri", "multi_orang"]
+  },
+  "evaluation": {
+    "threshold_selection": "validation_only",
+    "held_out_test_roboflow_macro_f1_backend_rule": 0.8786,
+    "held_out_test_multiposture_macro_f1_backend_rule": 0.9022,
+    "external_generated_photo_accuracy_detected_pose": 0.9412,
+    "external_generated_photo_operational_accuracy": 0.8889,
+    "controlled_front_camera_development_accuracy": 1.0,
+    "out_of_scope_rejection_development_accuracy": 1.0,
+    "warning": "Controlled-camera and rejection results use a small synthetic development set and are not final holdout metrics."
+  }
+}

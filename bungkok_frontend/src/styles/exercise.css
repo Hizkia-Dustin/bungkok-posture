@@ -1,0 +1,295 @@
+.exercise-dialog {
+  width: min(1040px, calc(100vw - 48px));
+  max-width: 1040px;
+}
+.exercise-dialog .dialog-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.exercise-heading {
+  margin: 20px 0;
+}
+.exercise-heading h2 {
+  margin-top: 12px;
+}
+.exercise-steps {
+  display: flex;
+  gap: 18px;
+  list-style: none;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.exercise-steps li {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.exercise-steps span {
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  background: var(--blue);
+}
+.exercise-steps [aria-current] {
+  color: var(--ink);
+  font-weight: 700;
+}
+.exercise-steps [aria-current] span {
+  background: var(--pink);
+}
+.exercise-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+.exercise-preview {
+  position: relative;
+  background: var(--blue);
+  border-radius: 24px;
+  overflow: hidden;
+  min-height: 360px;
+  align-self: start;
+}
+.pip-composite-canvas, .pip-source-video { position: fixed; left: -4px; bottom: -4px; width: 2px; height: 2px; opacity: .001; pointer-events: none; }
+.exercise-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+}
+.exercise-preview canvas.exercise-skeleton-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  pointer-events: none;
+  z-index: 2;
+}
+.exercise-preview video.camera-hidden {
+  visibility: hidden;
+}
+.exercise-preview > p {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+}
+.exercise-silhouette {
+  display: none !important;
+}
+.exercise-align-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(8px);
+  z-index: 4;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease;
+}
+.exercise-align-badge.good {
+  background: rgba(34, 197, 94, 0.92);
+  color: #ffffff;
+}
+.exercise-align-badge.warn {
+  background: rgba(245, 158, 11, 0.92);
+  color: #ffffff;
+}
+.exercise-align-badge.bad {
+  background: rgba(239, 68, 68, 0.92);
+  color: #ffffff;
+}
+.exercise-posture-reminder {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 5;
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  color: #fff;
+  background: rgba(190, 35, 70, 0.94);
+  box-shadow: 0 10px 28px rgba(93, 18, 40, 0.28);
+  backdrop-filter: blur(8px);
+  animation: posture-reminder-in 180ms ease-out;
+}
+.exercise-posture-reminder strong { font-size: 14px; }
+.exercise-posture-reminder span { font-size: 12px; line-height: 1.4; }
+@keyframes posture-reminder-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+.exercise-preview-label {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: #fff;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+.exercise-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background: rgb(0 0 0 / 45%);
+  color: var(--polar);
+  font-size: clamp(48px, 8vw, 72px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.exercise-controls label:not(.form-field) {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+}
+.exercise-controls input {
+  accent-color: var(--pink);
+}
+.exercise-controls select {
+  width: 100%;
+}
+.exercise-timer {
+  font-size: 64px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.exercise-good {
+  color: #176444;
+}
+.exercise-warning,
+.exercise-error {
+  color: #983b37;
+  background: #fff0ee;
+  padding: 10px;
+  border-radius: 12px;
+}
+.exercise-error:has(button) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.exercise-error button { flex: 0 0 auto; }
+.exercise-confirm {
+  background: var(--polar);
+  padding: 16px;
+  border-radius: 16px;
+}
+.exercise-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.exercise-summary-grid > div {
+  padding: 20px;
+  background: var(--blue);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+}
+.exercise-summary-grid strong {
+  font-size: 28px;
+}
+.exercise-earned {
+  padding: 24px;
+  background: color-mix(in srgb, var(--pink) 12%, var(--polar));
+  border-radius: 20px;
+  display: grid;
+  gap: 8px;
+}
+.exercise-earned strong {
+  font-size: 32px;
+}
+.exercise-celebration {
+  background: var(--blue);
+  padding: 24px;
+  border-radius: 20px;
+  animation: exercise-in 0.4s ease-out;
+}
+.exercise-controls {
+  animation: exercise-in 0.25s ease-out;
+}
+@keyframes exercise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 750px) {
+  .exercise-layout {
+    grid-template-columns: 1fr;
+  }
+  .exercise-steps {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .exercise-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Exercise setup */
+.exercise-dialog .dialog-content { padding: clamp(18px, 3vw, 32px); }
+.exercise-heading { margin: 14px 0 12px; }
+.exercise-heading h2 { margin: 0; font-size: clamp(26px, 3vw, 34px); letter-spacing: -.035em; }
+.exercise-steps { gap: 8px 20px; flex-wrap: wrap; margin: 0 0 22px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.exercise-steps li { gap: 6px; }
+.exercise-steps li > span { width: 20px; height: 20px; color: var(--ink-secondary); }
+.exercise-steps small { font-size: 12px; }
+.exercise-steps li[aria-current] > span { color: var(--ink); }
+
+.exercise-layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: start; }
+.exercise-preview:not(.has-camera-frame) { min-height: 0; aspect-ratio: 4 / 3; border-radius: 14px; background: var(--blue); }
+.exercise-camera-idle { position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 20px; text-align: center; background: var(--blue); color: var(--ink); }
+.has-camera-frame .exercise-camera-idle { inset: 32% 8% 18%; }
+.exercise-camera-idle small { max-width: 32ch; font-size: 13px; line-height: 1.5; }
+.exercise-controls { min-width: 0; gap: 20px; animation: exercise-in .18s ease-out; }
+.exercise-controls > .soft-button.primary:disabled { opacity: .55; }
+.pov-selector-card { display: grid; gap: 22px; min-width: 0; }
+.exercise-angle, .exercise-ready { padding: 0; margin: 0; border: 0; min-width: 0; }
+.exercise-controls legend, .pov-device-selects label > span { font-size: 14px; font-weight: 650; }
+.exercise-controls legend { margin-bottom: 8px; padding: 0; }
+.pov-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.exercise-controls .pov-pills label { min-height: 46px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.exercise-controls .pov-pills label:has(:checked) { border-color: var(--pink); background: color-mix(in srgb, var(--pink) 8%, var(--polar)); }
+.exercise-controls .pov-device-selects label { display: grid; gap: 8px; }
+.pov-device-selects select { min-width: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--polar); color: var(--ink-secondary); font: inherit; }
+.exercise-ready label { min-height: 36px; cursor: pointer; }
+.exercise-controls :is(input,select,button):focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.exercise-confirm, .exercise-earned, .exercise-summary-grid > div { border-radius: 10px; }
+@media (max-width: 750px) {
+  .exercise-layout { grid-template-columns: minmax(0, 1fr); }
+  .exercise-steps { gap: 6px 12px; }
+}
+@media (max-width: 520px) {
+  .exercise-dialog { width: calc(100vw - 16px); }
+  .exercise-steps li:not([aria-current]) small { position: absolute; clip-path: inset(50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exercise-flow *, .exercise-flow *::before, .exercise-flow *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
