@@ -1,41 +1,11 @@
-const WASM_ROOT = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
 const MODEL_PATH = "/models/pose_landmarker_lite.task";
 
-let visionFilesPromise;
-
-async function loadVisionFiles() {
-  if (!visionFilesPromise) {
-    visionFilesPromise = import("@mediapipe/tasks-vision").then(({ FilesetResolver }) =>
-      FilesetResolver.forVisionTasks(WASM_ROOT)
-    );
-  }
-  return visionFilesPromise;
-}
-
-async function createLandmarker() {
-  const [{ PoseLandmarker }, vision] = await Promise.all([
-    import("@mediapipe/tasks-vision"),
-    loadVisionFiles(),
-  ]);
-
-  const options = {
-    baseOptions: { modelAssetPath: MODEL_PATH, delegate: "GPU" },
-    runningMode: "VIDEO",
-    numPoses: 1,
-    minPoseDetectionConfidence: 0.5,
-    minPosePresenceConfidence: 0.5,
-    minTrackingConfidence: 0.55,
-    outputSegmentationMasks: false,
+function resizedFrameSize(video, maxWidth) {
+  const scale = Math.min(1, maxWidth / video.videoWidth);
+  return {
+    width: Math.max(1, Math.round(video.videoWidth * scale)),
+    height: Math.max(1, Math.round(video.videoHeight * scale)),
   };
-
-  try {
-    return await PoseLandmarker.createFromOptions(vision, options);
-  } catch {
-    return PoseLandmarker.createFromOptions(vision, {
-      ...options,
-      baseOptions: { ...options.baseOptions, delegate: "CPU" },
-    });
-  }
 }
 
 export async function startLocalPoseTracker({
@@ -43,33 +13,89 @@ export async function startLocalPoseTracker({
   onLandmarks,
   onReady,
   onError,
-  maxFps = 30,
+  maxFps = 18,
 }) {
-  const landmarker = await createLandmarker();
+  const worker = new Worker(
+    new URL("../workers/localPoseWorker.js", import.meta.url),
+    { type: "module" }
+  );
   let stopped = false;
+  let workerReady = false;
+  let frameInFlight = false;
   let animationId = null;
   let videoFrameId = null;
-  let lastVideoTime = -1;
-  let lastInferenceTime = 0;
+  let lastCaptureTime = 0;
   const minimumInterval = 1000 / maxFps;
 
-  onReady?.();
-
-  const processVideoFrame = (timestamp) => {
+  const stop = () => {
     if (stopped) return;
+    stopped = true;
+    if (animationId !== null) cancelAnimationFrame(animationId);
+    if (videoFrameId !== null && typeof video.cancelVideoFrameCallback === "function") {
+      video.cancelVideoFrameCallback(videoFrameId);
+    }
+    worker.postMessage({ type: "close" });
+    worker.terminate();
+  };
+
+  worker.onmessage = ({ data }) => {
+    if (stopped) return;
+    if (data.type === "ready") {
+      workerReady = true;
+      onReady?.();
+      return;
+    }
+    if (data.type === "result") {
+      frameInFlight = false;
+      onLandmarks(data.landmarks || []);
+      return;
+    }
+    if (data.type === "error") {
+      frameInFlight = false;
+      onError?.(new Error(data.message || "Pelacak postur lokal berhenti"));
+      stop();
+    }
+  };
+  worker.onerror = (event) => {
+    frameInFlight = false;
+    onError?.(event.error || new Error(event.message || "Web Worker gagal dimuat"));
+    stop();
+  };
+
+  worker.postMessage({
+    type: "init",
+    modelUrl: new URL(MODEL_PATH, window.location.origin).href,
+  });
+
+  const capture = async (timestamp) => {
     if (
-      video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
-      video.currentTime !== lastVideoTime &&
-      timestamp - lastInferenceTime >= minimumInterval
+      stopped ||
+      !workerReady ||
+      frameInFlight ||
+      video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
+      timestamp - lastCaptureTime < minimumInterval
     ) {
-      lastVideoTime = video.currentTime;
-      lastInferenceTime = timestamp;
-      try {
-        const result = landmarker.detectForVideo(video, timestamp);
-        onLandmarks(result.landmarks?.[0] || []);
-      } catch (error) {
-        onError?.(error);
+      schedule();
+      return;
+    }
+
+    frameInFlight = true;
+    lastCaptureTime = timestamp;
+    try {
+      const size = resizedFrameSize(video, 384);
+      const bitmap = await createImageBitmap(video, {
+        resizeWidth: size.width,
+        resizeHeight: size.height,
+        resizeQuality: "low",
+      });
+      if (stopped) {
+        bitmap.close();
+      } else {
+        worker.postMessage({ type: "frame", bitmap, timestamp }, [bitmap]);
       }
+    } catch (error) {
+      frameInFlight = false;
+      onError?.(error);
     }
     schedule();
   };
@@ -77,20 +103,12 @@ export async function startLocalPoseTracker({
   const schedule = () => {
     if (stopped) return;
     if (typeof video.requestVideoFrameCallback === "function") {
-      videoFrameId = video.requestVideoFrameCallback((timestamp) => processVideoFrame(timestamp));
+      videoFrameId = video.requestVideoFrameCallback((timestamp) => capture(timestamp));
     } else {
-      animationId = requestAnimationFrame(processVideoFrame);
+      animationId = requestAnimationFrame(capture);
     }
   };
 
   schedule();
-
-  return () => {
-    stopped = true;
-    if (animationId !== null) cancelAnimationFrame(animationId);
-    if (videoFrameId !== null && typeof video.cancelVideoFrameCallback === "function") {
-      video.cancelVideoFrameCallback(videoFrameId);
-    }
-    landmarker.close();
-  };
+  return stop;
 }

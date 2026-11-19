@@ -460,7 +460,7 @@ export default function StartExerciseModal({ closeRequest }) {
 
     startLocalPoseTracker({
       video: captureSource,
-      maxFps: 30,
+      maxFps: 18,
       onReady: () => {
         if (!cancelled) localTrackingReady.current = true;
       },
@@ -471,7 +471,7 @@ export default function StartExerciseModal({ closeRequest }) {
         drawSkeletonOnCanvas(canvas.current, landmarks, localVisualColor.current);
 
         const now = performance.now();
-        if (landmarks.length && now - lastLocalSnapshot.current >= 200) {
+        if (landmarks.length && now - lastLocalSnapshot.current >= 350) {
           lastLocalSnapshot.current = now;
           setVisualFrame({ landmarks, color: localVisualColor.current });
         }
