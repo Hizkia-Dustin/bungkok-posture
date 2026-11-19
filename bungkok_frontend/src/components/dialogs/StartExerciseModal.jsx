@@ -43,6 +43,7 @@ import "../../styles/exercise.css";
 
 const steps = ["Persiapan", "Kalibrasi", "Atur sesi", "Latihan", "Rekap"];
 const virtualCamera = /privacy view|virtual|obs camera/i;
+const ENABLE_LOCAL_POSE_TRACKER = false;
 
 async function startPreview(element, media) {
   element.srcObject = media;
@@ -449,7 +450,7 @@ export default function StartExerciseModal({ closeRequest }) {
   // saat pengguna membuka tab lain atau meminimalkan browser.
   // =========================================================================
   useEffect(() => {
-    if (camera !== "active") return;
+    if (camera !== "active" || !ENABLE_LOCAL_POSE_TRACKER) return;
 
     const captureSource = engineVideo.current || video.current;
     if (!captureSource) return;
