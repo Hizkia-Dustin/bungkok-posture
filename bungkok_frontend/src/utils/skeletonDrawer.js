@@ -22,7 +22,7 @@ const FAST_LERP_FACTOR = 0.52;
 const TARGET_DEAD_ZONE = 0.0035;
 const FACE_DEAD_ZONE = 0.003;
 const VELOCITY_GATE = 0.006;
-const MAX_PREDICTION_MS = 70;
+const MAX_PREDICTION_MS = 120;
 const FADE_TIMEOUT_MS = 900; // Mulai memudarkan jika frame kosong > 900ms
 
 function renderLoop() {

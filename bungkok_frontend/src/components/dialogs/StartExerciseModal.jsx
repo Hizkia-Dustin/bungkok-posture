@@ -517,7 +517,7 @@ export default function StartExerciseModal({ closeRequest }) {
       requestInFlight.current = true;
       try {
         syncCanvasSize(captureSource);
-        const blob = await captureFrameAsBlob(captureSource, 400, 0.8);
+        const blob = await captureFrameAsBlob(captureSource, 320, 0.68);
 
         // KASUS A: Tahap Latihan (Step 3) & Sudah Dikalibrasi
         if (step === 3 && running.current && calibrationId.current && !settings.current.paused) {
@@ -661,10 +661,10 @@ export default function StartExerciseModal({ closeRequest }) {
           processFrame();
         }
       };
-      worker.postMessage({ command: "start", interval: 150 });
+      worker.postMessage({ command: "start", interval: 100 });
     } catch {
       // Fallback timer jika browser membatasi web worker
-      fallbackInterval = setInterval(processFrame, 150);
+      fallbackInterval = setInterval(processFrame, 100);
     }
 
     return () => {
