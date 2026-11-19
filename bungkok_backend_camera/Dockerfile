@@ -3,6 +3,7 @@ FROM python:3.11-slim
 
 # Install system dependencies yang dibutuhkan oleh OpenCV & MediaPipe
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libegl1 \
     libgl1 \
     libglib2.0-0 \
     libgomp1 \
