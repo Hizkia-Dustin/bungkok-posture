@@ -209,6 +209,7 @@ export default function StartExerciseModal({ closeRequest }) {
   const localLandmarks = useRef([]);
   const localVisualColor = useRef("#22c55e");
   const lastLocalSnapshot = useRef(0);
+  const lastLocalLandmarksAt = useRef(0);
   const stream = useRef(null);
   const alive = useRef(true);
   const running = useRef(false);
@@ -219,9 +220,14 @@ export default function StartExerciseModal({ closeRequest }) {
   const settings = useRef({ config, posture, paused });
   settings.current = { config, posture, paused };
   const pictureInPictureSource = () => pipVideo.current?.srcObject ? pipVideo.current : video.current;
+  const hasFreshLocalLandmarks = () => (
+    localTrackingReady.current
+    && localLandmarks.current.length > 0
+    && performance.now() - lastLocalLandmarksAt.current < 1000
+  );
   const updateVisualFrame = (serverLandmarks, color) => {
     localVisualColor.current = color;
-    const landmarks = localTrackingReady.current && localLandmarks.current.length
+    const landmarks = hasFreshLocalLandmarks()
       ? localLandmarks.current
       : (serverLandmarks || []);
     setVisualFrame({ landmarks, color });
@@ -466,13 +472,17 @@ export default function StartExerciseModal({ closeRequest }) {
     startLocalPoseTracker({
       video: captureSource,
       maxFps: 18,
-      onReady: () => {
-        if (!cancelled) localTrackingReady.current = true;
-      },
       onLandmarks: (landmarks) => {
         if (cancelled || !monitorOpen.current) return;
+        if (!landmarks.length) {
+          localTrackingReady.current = false;
+          localLandmarks.current = [];
+          return;
+        }
+
         localTrackingReady.current = true;
         localLandmarks.current = landmarks;
+        lastLocalLandmarksAt.current = performance.now();
         drawSkeletonOnCanvas(canvas.current, landmarks, localVisualColor.current);
 
         const now = performance.now();
@@ -604,10 +614,10 @@ export default function StartExerciseModal({ closeRequest }) {
 
             res.displayTitle = statusTitle;
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
+            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
           } else {
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
+            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
           }
         }
         // KASUS B: Tahap Persiapan & Kalibrasi (Step 0, 1, 2)
@@ -640,7 +650,7 @@ export default function StartExerciseModal({ closeRequest }) {
               .find((item) => item.isUpright === isUpright)?.feedback;
             const boneColor = isUpright ? "#22c55e" : "#f59e0b";
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
+            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
             setAlignmentInfo({
               isUpright,
               feedback:
@@ -652,7 +662,7 @@ export default function StartExerciseModal({ closeRequest }) {
             sideAlignmentUpright.current = null;
             alignmentHistory.current = [];
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
+            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
             setAlignmentInfo({
               isUpright: false,
               feedback: res.reason || "Pastikan tubuh berada di dalam kamera.",

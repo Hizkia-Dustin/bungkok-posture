@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * UserAvatar: Komponen Avatar antiputus untuk Google OAuth & Profil
- * Menggunakan referrerPolicy="no-referrer" agar foto profil Google (lh3.googleusercontent.com)
- * tidak diblokir oleh browser (seperti Brave / Chrome) karena referer localhost.
- * Otomatis fallback ke inisial nama jika gambar gagal dimuat.
+ * Foto eksternal yang gagal dimuat diganti dengan inisial lokal.
  */
 export default function UserAvatar({
   src,
@@ -14,46 +12,62 @@ export default function UserAvatar({
   style = {},
   alt = 'Foto profil',
 }) {
-  const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name || 'User'
-  )}&background=0284c7&color=fff&bold=true`;
-
-  const [imgSrc, setImgSrc] = useState(() => {
-    if (!src || src.includes('default-user')) return fallbackUrl;
-    return src;
-  });
+  const imageUrl = src && !src.includes('default-user') ? src : '';
+  const [imageFailed, setImageFailed] = useState(false);
+  const initials = (name || 'User')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('')
+    .toUpperCase() || 'U';
+  const avatarStyle = {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    objectFit: 'cover',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: '0 0 auto',
+    ...style,
+  };
 
   useEffect(() => {
-    if (src && !src.includes('default-user')) {
-      setImgSrc(src);
-    } else {
-      setImgSrc(fallbackUrl);
-    }
-  }, [src, fallbackUrl]);
+    setImageFailed(false);
+  }, [imageUrl]);
+
+  if (!imageUrl || imageFailed) {
+    return (
+      <span
+        role="img"
+        aria-label={alt}
+        className={`user-avatar-img user-avatar-fallback ${className}`}
+        style={{
+          ...avatarStyle,
+          background: '#c9e8fa',
+          color: '#153b59',
+          fontSize: Math.max(11, Math.round(size * 0.34)),
+          fontWeight: 750,
+          letterSpacing: '-0.03em',
+        }}
+      >
+        {initials}
+      </span>
+    );
+  }
 
   return (
     <img
-      src={imgSrc}
+      src={imageUrl}
       alt={alt}
       width={size}
       height={size}
       className={`user-avatar-img ${className}`}
       referrerPolicy="no-referrer"
-      crossOrigin="anonymous"
       loading="eager"
-      onError={() => {
-        if (imgSrc !== fallbackUrl) {
-          setImgSrc(fallbackUrl);
-        }
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '50%',
-        objectFit: 'cover',
-        display: 'inline-block',
-        ...style,
-      }}
+      onError={() => setImageFailed(true)}
+      style={avatarStyle}
     />
   );
 }
