@@ -56,14 +56,37 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     let alive = true;
-    const sync = async (session) => {
+    let hydrationTimer;
+    let readyTimer;
+    let lastHydratedToken = '';
+
+    const hydrateAccount = (session) => {
+      const token = session?.access_token || '';
+      if (!token || token === lastHydratedToken) return;
+      lastHydratedToken = token;
+
+      // Jalankan setelah callback auth Supabase selesai. Memanggil getSession
+      // dari dalam callback onAuthStateChange dapat membuat keduanya saling menunggu.
+      clearTimeout(hydrationTimer);
+      hydrationTimer = window.setTimeout(async () => {
+        if (!alive) return;
+        try {
+          await refreshAccount();
+        } catch (error) {
+          console.error('[account background sync]', error);
+        }
+      }, 0);
+    };
+
+    const sync = (session) => {
       if (!alive) return;
       setIsAuthenticated(Boolean(session));
+      setAuthReady(true);
       if (!session) {
+        lastHydratedToken = '';
         applyState({ user: EMPTY_USER });
         setSessions([]);
         setAppConfig(EMPTY_CONFIG);
-        setAuthReady(true);
         return;
       }
 
@@ -73,19 +96,36 @@ export function AppProvider({ children }) {
         setUser((prev) => ({ ...prev, id: session.user.id, email: session.user.email || '', name: metaName || prev.name || 'Pengguna' }));
       }
 
-      // Buka dashboard secara INSTAN tanpa menunggu backend cold-start
-      if (alive) setAuthReady(true);
-
-      // Ambil data detail & riwayat latihan di latar belakang (background sync)
-      try {
-        await refreshAccount();
-      } catch (error) {
-        console.error('[account background sync]', error);
-      }
+      // Dashboard dibuka dari data sesi; detail akun menyusul tanpa menahan UI.
+      hydrateAccount(session);
     };
-    supabase.auth.getSession().then(({ data }) => sync(data.session));
+
+    // Jangan biarkan animasi pembuka menutup layar tanpa batas saat jaringan buruk.
+    readyTimer = window.setTimeout(() => {
+      if (alive) setAuthReady(true);
+    }, 3000);
+
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) throw error;
+        sync(data.session);
+      })
+      .catch((error) => {
+        console.error('[auth session restore]', error);
+        if (alive) {
+          setIsAuthenticated(false);
+          setAuthReady(true);
+        }
+      })
+      .finally(() => clearTimeout(readyTimer));
+
     const { data } = supabase.auth.onAuthStateChange((_event, session) => sync(session));
-    return () => { alive = false; data.subscription.unsubscribe(); };
+    return () => {
+      alive = false;
+      clearTimeout(hydrationTimer);
+      clearTimeout(readyTimer);
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   const openModal = (type, payload = {}) => setActiveModal({ type, payload });
