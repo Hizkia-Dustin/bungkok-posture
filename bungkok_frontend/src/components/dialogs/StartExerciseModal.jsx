@@ -135,6 +135,9 @@ export default function StartExerciseModal({ closeRequest }) {
       setPovMode("full_torso");
       if (video.current) {
         await startPreview(video.current, incomingStream);
+        setError("");
+        alignmentHistory.current = [];
+        setAlignmentInfo({ isUpright: false, feedback: "Memeriksa posisi duduk…", hasPerson: false });
         setCamera("active");
         setMonitorStream(incomingStream);
       }

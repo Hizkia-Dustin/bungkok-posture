@@ -49,6 +49,9 @@
     "forward_delta_high": 0.30,
     "forward_vertical_guard": 1.15
   },
+  "side_alignment": {
+    "max_torso_lean_deg": 15.0
+  },
   "guards": {
     "exact_pose_count": 1,
     "minimum_torso_visibility": 0.5,

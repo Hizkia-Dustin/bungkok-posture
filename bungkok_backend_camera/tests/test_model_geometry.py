@@ -1,8 +1,49 @@
 import pytest
+import math
 from types import SimpleNamespace
 
 from model.posture_backend_v3 import PostureBackendV3
 from session_service import empty_metrics, record_prediction
+
+
+def side_landmarks(lean, width=640, height=480):
+    points = [SimpleNamespace(x=.5, y=.5, visibility=.9) for _ in range(33)]
+    dx = math.tan(math.radians(lean)) * (.4 * height) / width
+    for shoulder, hip, offset in ((11, 23, 0), (12, 24, .03)):
+        points[shoulder].x, points[shoulder].y = .5 + offset + dx, .3
+        points[hip].x, points[hip].y = .5 + offset, .7
+    return points
+
+
+@pytest.mark.parametrize('width,height', [(640, 480), (480, 640)])
+def test_side_angle_uses_pixel_aspect_ratio(width, height):
+    features = PostureBackendV3._side_alignment_features(side_landmarks(10, width, height), width, height)
+    assert features['side_alignment_available']
+    assert features['side_torso_lean_deg'] == pytest.approx(10)
+
+
+@pytest.mark.parametrize('lean,expected', [(4, True), (14, True), (25, False)])
+def test_side_preparation_ignores_hidden_shoulder_depth_noise(lean, expected):
+    model = PostureBackendV3.__new__(PostureBackendV3)
+    model.config = {}
+    features = PostureBackendV3._side_alignment_features(side_landmarks(lean), 640, 480)
+    model.extract = lambda *args, **kwargs: {
+        'status': 'features_ready', 'camera_mode': 'full_torso',
+        'v2_torso_lean_deg': 22, 'v2_shoulder_roll_deg': 17, **features,
+    }
+    assert model.detect('unused')['is_upright'] is expected
+
+
+def test_side_alignment_requires_visible_torso():
+    points = side_landmarks(0)
+    points[23].visibility = points[24].visibility = .2
+    assert not PostureBackendV3._side_alignment_features(points, 640, 480)['side_alignment_available']
+
+
+def test_front_view_keeps_existing_alignment_rules():
+    points = side_landmarks(0)
+    points[11].x, points[12].x = .2, .8
+    assert not PostureBackendV3._side_alignment_features(points, 640, 480)['side_alignment_available']
 
 
 def test_relative_head_roll_ignores_camera_roll():

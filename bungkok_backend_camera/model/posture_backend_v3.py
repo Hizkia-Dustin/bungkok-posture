@@ -178,6 +178,27 @@ class PostureBackendV3:
             raise ValueError("Fitur pose mengandung NaN/inf")
         return features
 
+    @staticmethod
+    def _side_alignment_features(normalized: Any, width: int, height: int) -> dict[str, Any]:
+        # Pixel coordinates keep angles consistent across portrait/landscape cameras.
+        sides = []
+        for shoulder, hip in ((11, 23), (12, 24)):
+            s, h = normalized[shoulder], normalized[hip]
+            confidence = min(float(s.visibility or 0), float(h.visibility or 0))
+            dx, dy = (s.x - h.x) * width, (h.y - s.y) * height
+            if confidence >= 0.5 and dy > height * 0.08:
+                sides.append((confidence, dx, dy))
+        if not sides:
+            return {"side_alignment_available": False}
+        _, dx, dy = max(sides, key=lambda side: side[0])
+        shoulder_span = abs(normalized[11].x - normalized[12].x) * width
+        hip_span = abs(normalized[23].x - normalized[24].x) * width
+        profile = max(shoulder_span, hip_span) / dy < 0.55
+        return {
+            "side_alignment_available": bool(profile),
+            "side_torso_lean_deg": float(np.degrees(np.arctan2(abs(dx), dy))),
+        }
+
     def _upper_body_features(self, normalized: Any, world: Any) -> dict[str, Any]:
         ls_norm = normalized[11]
         rs_norm = normalized[12]
@@ -439,6 +460,7 @@ class PostureBackendV3:
             "mean_hip_angle": mean_hip_angle,
             "landmarks": serialized_landmarks,
             **self._torso_features(world),
+            **self._side_alignment_features(normalized, image.width, image.height),
         }
 
     def detect(self, image_path: str | Path, camera_mode: str = "auto") -> dict[str, Any]:
@@ -505,8 +527,12 @@ class PostureBackendV3:
         else:
             lean = result.get("v2_torso_lean_deg", 0.0)
             roll = result.get("v2_shoulder_roll_deg", 0.0)
-            is_upright = (lean < 12.0) and (roll < 9.0)
-            feedback = "Punggung tegak dan sejajar!" if is_upright else "Tegakkan punggung dan posisikan tubuh seimbang"
+            if result.get("side_alignment_available", False):
+                limit = self.config.get("side_alignment", {}).get("max_torso_lean_deg", 15.0)
+                is_upright = result["side_torso_lean_deg"] <= limit
+            else:
+                is_upright = (lean < 12.0) and (roll < 9.0)
+            feedback = "Posisi siap. Pertahankan duduk nyaman untuk kalibrasi." if is_upright else "Duduk lebih tegak dan pastikan kamera sejajar, lalu coba lagi."
 
         result.update({
             "status": "ok",
