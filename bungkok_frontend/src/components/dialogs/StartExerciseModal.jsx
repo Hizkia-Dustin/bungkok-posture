@@ -43,7 +43,7 @@ import "../../styles/exercise.css";
 
 const steps = ["Persiapan", "Kalibrasi", "Atur sesi", "Latihan", "Rekap"];
 const virtualCamera = /privacy view|virtual|obs camera/i;
-const ENABLE_LOCAL_POSE_TRACKER = false;
+const ENABLE_LOCAL_POSE_TRACKER = true;
 
 async function startPreview(element, media) {
   element.srcObject = media;
@@ -689,10 +689,10 @@ export default function StartExerciseModal({ closeRequest }) {
           processFrame();
         }
       };
-      worker.postMessage({ command: "start", interval: 100 });
+      worker.postMessage({ command: "start", interval: 250 });
     } catch {
       // Fallback timer jika browser membatasi web worker
-      fallbackInterval = setInterval(processFrame, 100);
+      fallbackInterval = setInterval(processFrame, 250);
     }
 
     return () => {

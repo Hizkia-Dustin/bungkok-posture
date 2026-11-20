@@ -25,14 +25,21 @@ async function request(path, options = {}) {
       // Endpoint /api/detect dan /api/health dapat diproses tanpa auth jika token kadaluarsa
       if (path !== '/api/detect' && path !== '/api/health') throw err;
     }
-    return fetch(`${API_BASE}${path}`, {
-      method: options.method || 'GET',
-      headers: {
-        ...(options.json ? { 'Content-Type': 'application/json' } : {}),
-        ...headers,
-      },
-      body: options.json ? JSON.stringify(options.json) : options.body,
-    });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || 12000);
+    try {
+      return await fetch(`${API_BASE}${path}`, {
+        method: options.method || 'GET',
+        headers: {
+          ...(options.json ? { 'Content-Type': 'application/json' } : {}),
+          ...headers,
+        },
+        body: options.json ? JSON.stringify(options.json) : options.body,
+        signal: options.signal || controller.signal,
+      });
+    } finally {
+      window.clearTimeout(timeout);
+    }
   };
 
   let response = await send();
@@ -57,15 +64,15 @@ export async function checkBackendHealth() {
   } catch (error) { return { online: false, error: error.message }; }
 }
 
-async function upload(path, formData) {
-  return request(path, { method: 'POST', body: formData });
+async function upload(path, formData, options = {}) {
+  return request(path, { method: 'POST', body: formData, ...options });
 }
 
 export function detectPose(blob, cameraMode = 'auto') {
   const form = new FormData();
   form.append('camera_mode', cameraMode);
   form.append('image', blob, 'frame.jpg');
-  return upload('/api/detect', form);
+  return upload('/api/detect', form, { timeoutMs: 5000 });
 }
 
 export function sendCalibration(blobs, cameraMode = 'auto') {
