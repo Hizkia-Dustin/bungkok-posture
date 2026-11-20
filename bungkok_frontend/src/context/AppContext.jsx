@@ -66,8 +66,22 @@ export function AppProvider({ children }) {
         setAuthReady(true);
         return;
       }
-      try { await refreshAccount(); } catch (error) { console.error('[account]', error); }
+
+      // Ambil nama dari metadata Supabase Auth agar langsung tampil tanpa jeda
+      if (session.user) {
+        const metaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0];
+        setUser((prev) => ({ ...prev, id: session.user.id, email: session.user.email || '', name: metaName || prev.name || 'Pengguna' }));
+      }
+
+      // Buka dashboard secara INSTAN tanpa menunggu backend cold-start
       if (alive) setAuthReady(true);
+
+      // Ambil data detail & riwayat latihan di latar belakang (background sync)
+      try {
+        await refreshAccount();
+      } catch (error) {
+        console.error('[account background sync]', error);
+      }
     };
     supabase.auth.getSession().then(({ data }) => sync(data.session));
     const { data } = supabase.auth.onAuthStateChange((_event, session) => sync(session));
