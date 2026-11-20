@@ -40,6 +40,16 @@ def test_side_alignment_requires_visible_torso():
     assert not PostureBackendV3._side_alignment_features(points, 640, 480)['side_alignment_available']
 
 
+def test_side_angle_does_not_jump_when_visibility_crosses():
+    points = side_landmarks(5)
+    points[12].x = points[24].x + math.tan(math.radians(22)) * (.4 * 480) / 640
+    points[11].visibility = .91
+    before = PostureBackendV3._side_alignment_features(points, 640, 480)
+    points[11].visibility = .89
+    after = PostureBackendV3._side_alignment_features(points, 640, 480)
+    assert abs(before['side_torso_lean_deg'] - after['side_torso_lean_deg']) < 1
+
+
 def test_front_view_keeps_existing_alignment_rules():
     points = side_landmarks(0)
     points[11].x, points[12].x = .2, .8

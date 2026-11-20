@@ -33,8 +33,8 @@ function LiveDashboardCamera() {
     const height = video.videoHeight || 480;
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
-    drawSkeletonOnCanvas(canvas, snapshot.landmarks, snapshot.color);
-  }, [snapshot.landmarks, snapshot.color]);
+    drawSkeletonOnCanvas(canvas, snapshot.landmarks, snapshot.color, snapshot.cameraMode);
+  }, [snapshot.landmarks, snapshot.color, snapshot.cameraMode]);
 
   useEffect(() => () => clearSkeletonCanvas(canvasRef.current), []);
 

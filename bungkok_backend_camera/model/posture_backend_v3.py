@@ -190,7 +190,11 @@ class PostureBackendV3:
                 sides.append((confidence, dx, dy))
         if not sides:
             return {"side_alignment_available": False}
-        _, dx, dy = max(sides, key=lambda side: side[0])
+        # Blend similarly visible sides instead of switching at each confidence crossover.
+        weights = [confidence ** 4 for confidence, _, _ in sides]
+        total_weight = sum(weights)
+        dx = sum(weight * side[1] for weight, side in zip(weights, sides)) / total_weight
+        dy = sum(weight * side[2] for weight, side in zip(weights, sides)) / total_weight
         shoulder_span = abs(normalized[11].x - normalized[12].x) * width
         hip_span = abs(normalized[23].x - normalized[24].x) * width
         profile = max(shoulder_span, hip_span) / dy < 0.55

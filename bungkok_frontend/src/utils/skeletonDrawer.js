@@ -16,6 +16,7 @@ let currentAlpha = 0;
 let targetAlpha = 0;
 let lastUpdateTime = 0;
 let animationFrameId = null;
+let sideView = false;
 
 const LERP_FACTOR = 0.30;
 const FAST_LERP_FACTOR = 0.52;
@@ -67,7 +68,7 @@ function renderLoop() {
         if (!tgt || !cur) continue;
 
         const velocity = targetVelocities?.[i] || { x: 0, y: 0 };
-        const predictionSeconds = Math.min(timeSinceUpdate, MAX_PREDICTION_MS) / 1000;
+        const predictionSeconds = sideView ? 0 : Math.min(timeSinceUpdate, MAX_PREDICTION_MS) / 1000;
         const predictedX = Math.min(1, Math.max(0, tgt.x + velocity.x * predictionSeconds));
         const predictedY = Math.min(1, Math.max(0, tgt.y + velocity.y * predictionSeconds));
 
@@ -207,8 +208,9 @@ function renderLoop() {
   animationFrameId = requestAnimationFrame(renderLoop);
 }
 
-export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55e') {
+export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55e', cameraMode = 'upper_body') {
   if (!canvas) return;
+  sideView = cameraMode === 'full_torso';
   activeCanvas = canvas;
 
   if (rawLandmarks && rawLandmarks.length > 0) {
@@ -218,7 +220,14 @@ export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55
     const nextTargets = previousTargets?.length === rawLandmarks.length
       ? rawLandmarks.map((point, index) => {
           const previous = previousTargets[index];
-          const deadZone = index <= 10 ? FACE_DEAD_ZONE : TARGET_DEAD_ZONE;
+          const deadZone = sideView ? 0.005 : index <= 10 ? FACE_DEAD_ZONE : TARGET_DEAD_ZONE;
+          if (sideView && previous) {
+            const distance = Math.hypot(point.x - previous.x, point.y - previous.y);
+            if (distance < deadZone) return { ...point, x: previous.x, y: previous.y, z: previous.z };
+            const alpha = distance > 0.04 ? 0.85 : 0.55;
+            return { ...point, x: previous.x + (point.x - previous.x) * alpha,
+              y: previous.y + (point.y - previous.y) * alpha };
+          }
           if (!previous || Math.hypot(point.x - previous.x, point.y - previous.y) >= deadZone) {
             return point;
           }

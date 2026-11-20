@@ -251,6 +251,7 @@ export default function StartExerciseModal({ closeRequest }) {
   const countdownActive = useRef(false);
   const predictionHistory = useRef([]);
   const alignmentHistory = useRef([]);
+  const sideAlignmentUpright = useRef(null);
   const slouchConsecutiveFrames = useRef(0);
   const slouchWarningActive = useRef(false);
   const reminderTimer = useRef(null);
@@ -502,6 +503,8 @@ export default function StartExerciseModal({ closeRequest }) {
     if (camera !== "active") return;
 
     let isSubscribed = true;
+    sideAlignmentUpright.current = null;
+    alignmentHistory.current = [];
     let worker = null;
     let fallbackInterval = null;
 
@@ -601,10 +604,10 @@ export default function StartExerciseModal({ closeRequest }) {
 
             res.displayTitle = statusTitle;
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor);
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
           } else {
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444");
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
           }
         }
         // KASUS B: Tahap Persiapan & Kalibrasi (Step 0, 1, 2)
@@ -614,9 +617,19 @@ export default function StartExerciseModal({ closeRequest }) {
           if (!isSubscribed) return;
 
           if (res.status === "ok") {
+            let ready = !!res.is_upright;
+            if (activeMode === "full_torso" && res.side_alignment_available && Number.isFinite(res.side_torso_lean_deg)) {
+              const limit = sideAlignmentUpright.current === null ? 15 : sideAlignmentUpright.current ? 18 : 12;
+              ready = res.side_torso_lean_deg <= limit;
+              sideAlignmentUpright.current = ready;
+            } else {
+              sideAlignmentUpright.current = null;
+            }
             alignmentHistory.current.push({
-              isUpright: !!res.is_upright,
-              feedback: res.alignment_feedback,
+              isUpright: ready,
+              feedback: activeMode === "full_torso"
+                ? (ready ? "Posisi siap. Pertahankan duduk nyaman untuk kalibrasi." : "Duduk lebih tegak dan pastikan kamera sejajar, lalu coba lagi.")
+                : res.alignment_feedback,
             });
             if (alignmentHistory.current.length > 5) alignmentHistory.current.shift();
             const uprightVotes = alignmentHistory.current.filter((item) => item.isUpright).length;
@@ -627,7 +640,7 @@ export default function StartExerciseModal({ closeRequest }) {
               .find((item) => item.isUpright === isUpright)?.feedback;
             const boneColor = isUpright ? "#22c55e" : "#f59e0b";
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor);
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
             setAlignmentInfo({
               isUpright,
               feedback:
@@ -636,8 +649,10 @@ export default function StartExerciseModal({ closeRequest }) {
               hasPerson: true,
             });
           } else {
+            sideAlignmentUpright.current = null;
+            alignmentHistory.current = [];
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444");
+            if (monitorOpen.current && !localTrackingReady.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
             setAlignmentInfo({
               isUpright: false,
               feedback: res.reason || "Pastikan tubuh berada di dalam kamera.",
@@ -871,9 +886,9 @@ export default function StartExerciseModal({ closeRequest }) {
       status: step === 3 ? (monitorInterrupted ? "interrupted" : paused ? "paused" : running.current ? "monitoring" : "interrupted") : camera === "active" ? "preparing" : "idle",
       posture, metrics, landmarks: visualFrame.landmarks, color: visualFrame.color,
       message: aiFeedback?.displayTitle || alignmentInfo.feedback || "Kamera aktif",
-      mode: config.mode, startedAt: startTime.current?.toISOString() || null,
+      mode: config.mode, cameraMode: povMode, startedAt: startTime.current?.toISOString() || null,
     });
-  }, [step, paused, camera, posture, metrics, visualFrame, aiFeedback, alignmentInfo.feedback, config.mode, monitorInterrupted, publishSnapshot]);
+  }, [step, paused, camera, posture, metrics, visualFrame, aiFeedback, alignmentInfo.feedback, config.mode, povMode, monitorInterrupted, publishSnapshot]);
 
   useEffect(() => {
     registerControls({ togglePause, finish });
