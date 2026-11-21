@@ -302,7 +302,6 @@ export default function AuthPage({ register = false }) {
       </section>
 
       <aside className="auth-visual">
-        <span className="auth-visual-eyebrow">KEBIASAAN KECIL, DAMPAK BAIK.</span>
         <h2>
           Duduk lebih<br />sadar<span>.</span>
         </h2>
@@ -326,7 +325,6 @@ export default function AuthPage({ register = false }) {
             <span><FigmaIcon file="8be17.svg" />Lacak kebiasaan</span>
           </div>
         </div>
-        <small className="auth-footnote">Pendamping kebiasaan, bukan alat diagnosis kesehatan.</small>
       </aside>
 
       {notice && (
