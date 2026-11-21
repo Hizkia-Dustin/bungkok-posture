@@ -268,28 +268,6 @@ export default function AuthPage({ register = false }) {
               {register ? 'Masuk di sini' : 'Daftar sekarang'}
             </Link>
           </p>
-
-          <div style={{
-            marginTop: '16px',
-            paddingTop: '16px',
-            borderTop: '1px solid #e2e8f0',
-            textAlign: 'center',
-          }}>
-            <Link
-              to="/cam/side"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '13px',
-                color: '#0284c7',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              📱 Buka Kamera Samping HP (Tanpa Login) →
-            </Link>
-          </div>
         </div>
 
         <footer className="auth-footer">
