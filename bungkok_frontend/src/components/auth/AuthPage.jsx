@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FigmaIcon, figmaAsset } from '../common/FigmaAsset';
 import Dialog from '../common/Dialog';
+import LegalDialog from './LegalDialog';
 import { supabase } from '../../services/supabaseClient';
 import '../../styles/auth.css';
 import '../../styles/app.css';
@@ -305,23 +306,15 @@ export default function AuthPage({ register = false }) {
         </div>
       </aside>
 
-      {notice && (
+      {(notice === 'terms' || notice === 'privacy') && (
+        <LegalDialog initialDocument={notice} onClose={() => setNotice(null)} />
+      )}
+
+      {notice === 'reset' && (
         <Dialog title="Informasi akun" onClose={() => setNotice(null)}>
-          <h2>
-            {
-              {
-                reset: 'Lupa kata sandi?',
-                privacy: 'Privasi Bungkok',
-                terms: 'Syarat & Ketentuan',
-              }[notice]
-            }
-          </h2>
+          <h2>Lupa kata sandi?</h2>
           <p>
-            {notice === 'reset'
-              ? 'Tautan pemulihan kata sandi telah dikirimkan ke email Anda. Silakan periksa kotak masuk atau spam.'
-              : notice === 'privacy'
-                ? 'Data postur Anda diproses secara lokal di perangkat Anda menggunakan model MediaPipe 3D dan hanya ringkasan metrik yang disimpan.'
-                : 'Bungkok adalah pendamping kebiasaan duduk ergonomis untuk mencegah bungkuk.'}
+            Tautan pemulihan kata sandi telah dikirimkan ke email Anda. Silakan periksa kotak masuk atau spam.
           </p>
           <button className="soft-button primary" onClick={() => setNotice(null)}>
             Tutup
