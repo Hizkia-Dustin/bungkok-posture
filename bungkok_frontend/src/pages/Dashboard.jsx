@@ -6,8 +6,8 @@ import { Card, Button, PageHeader, Progress, WeekChart } from '../components/com
 import { FigmaIcon, figmaAsset } from '../components/common/FigmaAsset';
 import UserAvatar from '../components/common/UserAvatar';
 import '../styles/dashboard.css';
-import { sessionWeek } from '../utils/exercise';
-import { clockLabel } from '../utils/exercise';
+import { sessionWeek, clockLabel, dayKey } from '../utils/exercise';
+import Dialog from '../components/common/Dialog';
 import { usePostureMonitor } from '../context/PostureMonitorContext';
 import { drawSkeletonOnCanvas, clearSkeletonCanvas } from '../utils/skeletonDrawer';
 
@@ -15,6 +15,7 @@ function LiveDashboardCamera() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const { stream, snapshot, restoreMonitor, togglePause, finish } = usePostureMonitor();
+  const [confirmFinish, setConfirmFinish] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current || !stream) return;
@@ -51,8 +52,16 @@ function LiveDashboardCamera() {
     <div className="dashboard-live-actions">
       <button type="button" onClick={restoreMonitor}>Buka monitor</button>
       <button type="button" onClick={togglePause}>{snapshot.status === 'paused' ? 'Lanjut' : 'Jeda'}</button>
-      <button type="button" onClick={finish}>Selesai</button>
+      <button type="button" onClick={() => setConfirmFinish(true)}>Selesai</button>
     </div>
+    {confirmFinish && <Dialog title="Konfirmasi selesai latihan" onClose={() => setConfirmFinish(false)}>
+      <h2>Selesaikan latihan?</h2>
+      <p>Pemantauan akan berhenti dan hasil sesi langsung disimpan. Sesi yang sudah selesai tidak bisa dilanjutkan lagi.</p>
+      <div className="dialog-actions">
+        <Button primary onClick={() => { setConfirmFinish(false); finish(); }}>Ya, selesaikan</Button>
+        <Button onClick={() => setConfirmFinish(false)}>Lanjut latihan</Button>
+      </div>
+    </Dialog>}
   </div>;
 }
 
@@ -124,7 +133,12 @@ export default function Dashboard() {
   const activeChallenge = challenges.find((challenge) => challenge.type === 'diikuti');
   const latest = sessions[0];
   const week = sessionWeek(sessions);
-  const today = sessions.filter(s => latest && (s.dateKey || s.fullDate) === (latest.dateKey || latest.fullDate));
+  // Sesi yang benar-benar terjadi hari ini (zona Asia/Jakarta), bukan tanggal sesi terakhir
+  const todayKey = dayKey(new Date());
+  const today = sessions.filter((s) => {
+    const started = s.startedAt || s.start_time;
+    return (s.dateKey || (started ? dayKey(new Date(started)) : null)) === todayKey;
+  });
   const claimableBadges = badges.filter((badge) => badge.unlocked && !badge.claimed);
   const liveMetrics = monitor.snapshot.metrics || {};
   const liveValid = (liveMetrics.upright || 0) + (liveMetrics.forward || 0) + (liveMetrics.backward || 0);
@@ -177,7 +191,7 @@ export default function Dashboard() {
   // Data 4 kartu statistik ringkas di baris atas
   // Format: [Label Kartu, Nilai Angka, Catatan/Perubahan, Ikon SVG Figma]
   const stats = [
-    ['Poin Hari Ini', today.reduce((sum, s) => sum + s.pointsEarned, 0), 'Poin sesi pada tanggal terakhir', '9ecd7.svg'],
+    ['Poin Hari Ini', today.reduce((sum, s) => sum + s.pointsEarned, 0), today.length ? `Dari ${today.length} sesi hari ini` : 'Belum ada sesi hari ini', '9ecd7.svg'],
     ['Saldo Poin', user.points, `${claimableBadges.length} pencapaian siap diklaim`, 'eba7f.svg'],
     ['Waktu Terpantau', latest?.validDuration || '0m', `dari ${latest?.totalDuration || '0m'} total sesi terakhir`, 'eec18.svg'],
     ['Postur Tegak', latest ? `${latest.uprightPercentage}%` : '—', `${latest?.uprightDuration || '0m'} tegak pada sesi terakhir`, '740fc.svg'],
@@ -190,12 +204,6 @@ export default function Dashboard() {
           -------------------------------------------------------------------- */}
       <PageHeader title={`Halo, ${user.name.split(' ')[0]}`} subtitle={latest ? `Sesi terakhir ${latest.fullDate} · ${latest.uprightPercentage}% waktu tegak` : 'Mulai sesi postur pertamamu saat sudah siap.'}>
         <div className="dashboard-user">
-          {/* Info status sesi kamera terakhir */}
-          <div>
-            Sesi terakhir: {latest ? `${latest.fullDate}, ${latest.time}` : 'Belum ada'}
-            <small>{monitor.mounted ? 'Pemantauan postur sedang aktif.' : 'Kamera belum aktif. Mulai saat kamu siap.'}</small>
-          </div>
-
           {/* Link cepat ke halaman Profil */}
           <Link to="/app/profil" title="Buka profil">
             <UserAvatar src={user.avatar} name={user.name} size={40} alt="Buka profil" />
@@ -243,7 +251,7 @@ export default function Dashboard() {
         <Card sky className="dashboard-start stack">
           <span className="soft-tag">{hasData ? 'Aktif hari ini' : 'Mulai kebiasaan baik'}</span>
           <h2>Siap Berlatih?</h2>
-          <p>Sesi terakhir: {latest?.fullDate || 'Belum ada'} · {latest?.validDuration || '0m'} valid · {latest?.uprightPercentage || 0}% tegak</p>
+          <p>{monitor.mounted ? 'Pemantauan postur sedang aktif. Buka monitor untuk melihat detailnya.' : 'Siapkan kamera dan posisi duduk, lalu mulai sesi saat kamu siap.'}</p>
           <Button primary onClick={monitor.mounted ? monitor.restoreMonitor : monitor.openMonitor}>
             {monitor.mounted ? 'Buka Monitor Latihan' : 'Mulai Latihan Sekarang'}
           </Button>
@@ -335,6 +343,7 @@ export default function Dashboard() {
               <em>+{session.pointsEarned} poin</em>
             </Link>
           ))}
+          {!sessions.length && <p className="dashboard-empty">Belum ada sesi. Selesaikan latihan pertamamu dan ringkasannya akan muncul di sini.</p>}
         </Card>
 
         {/* Koleksi Badge yang Terbuka */}
@@ -352,6 +361,7 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
+          {!badges.some((badge) => badge.unlocked) && <p className="dashboard-empty">Belum ada badge. Badge pertama terbuka setelah sesi valid pertamamu.</p>}
           <Button to="/app/reward" primary={claimableBadges.length > 0}>
             {claimableBadges.length > 0 ? `Klaim ${claimableBadges.length} hadiah` : 'Lihat pencapaian'}
           </Button>
@@ -374,7 +384,8 @@ export default function Dashboard() {
               <Progress value={activeChallenge.current} max={activeChallenge.total} pink />
             </button>
           )}
-          <Button to="/app/tantangan">Lihat semua tantangan</Button>
+          {!activeChallenge && <p className="dashboard-empty">Belum ada tantangan yang diikuti. Pilih satu tantangan untuk menambah hadiah dari latihanmu.</p>}
+          <Button to="/app/tantangan" primary={!activeChallenge}>{activeChallenge ? 'Lihat semua tantangan' : 'Pilih tantangan'}</Button>
         </Card>
       </div>
     </div>
