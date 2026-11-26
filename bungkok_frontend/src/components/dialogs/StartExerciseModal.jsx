@@ -15,6 +15,7 @@ import { startPictureInPictureComposer } from "../../utils/pictureInPictureCompo
 import {
   drawSkeletonOnCanvas,
   clearSkeletonCanvas,
+  publishPoseFrame,
 } from "../../utils/skeletonDrawer";
 import {
   checkBackendHealth,
@@ -76,7 +77,7 @@ const emptyMetrics = () => ({
 
 export default function StartExerciseModal({ closeRequest }) {
   const { user, completeSession, appConfig, equippedItems } = useApp();
-  const { isOpen: monitorIsOpen, testMode, closeMonitor, minimizeMonitor, setMonitorStream, publishSnapshot, registerControls } = usePostureMonitor();
+  const { testMode, closeMonitor, minimizeMonitor, setMonitorStream, publishSnapshot, registerControls } = usePostureMonitor();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [camera, setCamera] = useState("idle");
@@ -113,6 +114,11 @@ export default function StartExerciseModal({ closeRequest }) {
   const [visualFrame, setVisualFrame] = useState({ landmarks: [], color: "#22c55e" });
   const [notifPermission, setNotifPermission] = useState(getNotificationPermission);
   const [isPipActive, setIsPipActive] = useState(false);
+  // PiP yang dibuka lewat tombol tetap dibiarkan; PiP otomatis ditutup saat kembali ke tab
+  const manualPip = useRef(false);
+  useEffect(() => {
+    if (!isPipActive) manualPip.current = false;
+  }, [isPipActive]);
   const [autoPipEnabled, setAutoPipEnabled] = useState(true);
   const [monitorInterrupted, setMonitorInterrupted] = useState(false);
   const cameraFrameId = activeCameraFrame(equippedItems);
@@ -180,8 +186,11 @@ export default function StartExerciseModal({ closeRequest }) {
           }
         }
       } else {
-        // Tab kembali aktif dilihat pengguna
+        // Tab kembali aktif dilihat pengguna: tutup PiP otomatis, kamera sudah terlihat di halaman
         resetTabTitle();
+        if (document.pictureInPictureElement && !manualPip.current) {
+          document.exitPictureInPicture().catch(() => {});
+        }
       }
     };
 
@@ -229,6 +238,11 @@ export default function StartExerciseModal({ closeRequest }) {
     && localLandmarks.current.length > 0
     && performance.now() - lastLocalLandmarksAt.current < 1000
   );
+  // Gambar ke canvas monitor (juga sumber PiP) dan siarkan ke kamera dashboard
+  const drawPose = (landmarks, color) => {
+    drawSkeletonOnCanvas(canvas.current, landmarks, color, povMode);
+    publishPoseFrame(landmarks, color, povMode);
+  };
   const updateVisualFrame = (serverLandmarks, color) => {
     localVisualColor.current = color;
     const landmarks = hasFreshLocalLandmarks()
@@ -265,8 +279,6 @@ export default function StartExerciseModal({ closeRequest }) {
   const slouchConsecutiveFrames = useRef(0);
   const slouchWarningActive = useRef(false);
   const reminderTimer = useRef(null);
-  const monitorOpen = useRef(monitorIsOpen);
-  monitorOpen.current = monitorIsOpen;
   const stopCamera = () => {
     if (phoneReceiver.current) {
       phoneReceiver.current.destroy();
@@ -480,14 +492,15 @@ export default function StartExerciseModal({ closeRequest }) {
         if (!cancelled) localTrackerActive.current = true;
       },
       onLandmarks: (landmarks) => {
-        if (cancelled || !monitorOpen.current) return;
+        // Tetap menggambar saat monitor diperkecil agar PiP & kamera dashboard tidak membeku
+        if (cancelled) return;
         // Frame kosong sesaat diabaikan; skeletonDrawer memudar sendiri jika pose hilang > 900ms
         if (!landmarks.length) return;
 
         localTrackingReady.current = true;
         localLandmarks.current = landmarks;
         lastLocalLandmarksAt.current = performance.now();
-        drawSkeletonOnCanvas(canvas.current, landmarks, localVisualColor.current, povMode);
+        drawPose(landmarks, localVisualColor.current);
 
         const now = performance.now();
         if (landmarks.length && now - lastLocalSnapshot.current >= 350) {
@@ -623,10 +636,10 @@ export default function StartExerciseModal({ closeRequest }) {
 
             res.displayTitle = statusTitle;
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
+            if (!localTrackerActive.current) drawPose(res.landmarks, boneColor);
           } else {
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
+            if (!localTrackerActive.current) drawPose(res.landmarks || [], "#ef4444");
           }
         }
         // KASUS B: Tahap Persiapan & Kalibrasi (Step 0, 1, 2)
@@ -659,7 +672,7 @@ export default function StartExerciseModal({ closeRequest }) {
               .find((item) => item.isUpright === isUpright)?.feedback;
             const boneColor = isUpright ? "#22c55e" : "#f59e0b";
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
+            if (!localTrackerActive.current) drawPose(res.landmarks, boneColor);
             setAlignmentInfo({
               isUpright,
               feedback:
@@ -671,7 +684,7 @@ export default function StartExerciseModal({ closeRequest }) {
             sideAlignmentUpright.current = null;
             alignmentHistory.current = [];
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
+            if (!localTrackerActive.current) drawPose(res.landmarks || [], "#ef4444");
             setAlignmentInfo({
               isUpright: false,
               feedback: res.reason || "Pastikan tubuh berada di dalam kamera.",
@@ -788,11 +801,12 @@ export default function StartExerciseModal({ closeRequest }) {
 
   useEffect(() => {
     if (!closeRequest) return;
-    closeRequest.current = () => (step === 3 ? setConfirmEnd(true) : closeMonitor());
+    // Klik area gelap / Esc saat latihan = perkecil ke dashboard (sesi tetap berjalan)
+    closeRequest.current = () => (step === 3 ? minimizeMonitor() : closeMonitor());
     return () => {
       closeRequest.current = null;
     };
-  }, [step, closeRequest, closeMonitor]);
+  }, [step, closeRequest, closeMonitor, minimizeMonitor]);
 
   // Timer metrik sesi (akumulasi detik latihan)
   useEffect(() => {
@@ -1362,7 +1376,8 @@ export default function StartExerciseModal({ closeRequest }) {
                     <Button
                       onClick={async () => {
                         try {
-                          await togglePictureInPicture(pictureInPictureSource(), setIsPipActive);
+                          const opened = await togglePictureInPicture(pictureInPictureSource(), setIsPipActive);
+                          manualPip.current = Boolean(opened);
                         } catch (e) {
                           setError("Layar kecil belum dapat dibuka. Coba lagi setelah kamera aktif.");
                         }
@@ -1415,12 +1430,7 @@ export default function StartExerciseModal({ closeRequest }) {
 
                 <div className="dialog-actions">
                   <Button
-                    onClick={async () => {
-                      if (autoPipEnabled && pictureInPictureSource() && !document.pictureInPictureElement) {
-                        await requestAutoPictureInPicture(pictureInPictureSource(), setIsPipActive);
-                      }
-                      minimizeMonitor();
-                    }}
+                    onClick={minimizeMonitor}
                   >
                     Perkecil ke Dashboard
                   </Button>

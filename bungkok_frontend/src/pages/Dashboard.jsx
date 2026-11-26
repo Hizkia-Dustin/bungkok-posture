@@ -9,7 +9,7 @@ import '../styles/dashboard.css';
 import { sessionWeek, clockLabel, dayKey } from '../utils/exercise';
 import Dialog from '../components/common/Dialog';
 import { usePostureMonitor } from '../context/PostureMonitorContext';
-import { drawSkeletonOnCanvas, clearSkeletonCanvas } from '../utils/skeletonDrawer';
+import { drawSkeletonOnCanvas, clearSkeletonCanvas, subscribePoseFrames } from '../utils/skeletonDrawer';
 
 function LiveDashboardCamera() {
   const videoRef = useRef(null);
@@ -26,16 +26,21 @@ function LiveDashboardCamera() {
     };
   }, [stream]);
 
+  // Ikuti frame pose langsung dari pelacak (±18 fps), bukan snapshot 350 ms yang terasa patah-patah
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    if (!canvas || !video) return undefined;
-    const width = video.videoWidth || 640;
-    const height = video.videoHeight || 480;
-    if (canvas.width !== width) canvas.width = width;
-    if (canvas.height !== height) canvas.height = height;
-    drawSkeletonOnCanvas(canvas, snapshot.landmarks, snapshot.color, snapshot.cameraMode);
-  }, [snapshot.landmarks, snapshot.color, snapshot.cameraMode]);
+    const draw = (landmarks, color, cameraMode) => {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      if (!canvas || !video) return;
+      const width = video.videoWidth || 640;
+      const height = video.videoHeight || 480;
+      if (canvas.width !== width) canvas.width = width;
+      if (canvas.height !== height) canvas.height = height;
+      drawSkeletonOnCanvas(canvas, landmarks, color, cameraMode);
+    };
+    draw(snapshot.landmarks, snapshot.color, snapshot.cameraMode);
+    return subscribePoseFrames(draw);
+  }, []);
 
   useEffect(() => () => clearSkeletonCanvas(canvasRef.current), []);
 

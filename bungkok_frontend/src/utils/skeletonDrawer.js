@@ -6,17 +6,25 @@
  * 3. Anti-Flicker Persistence (mencegah kedip/hilang seketika saat 1 frame tertunda)
  */
 
-let activeCanvas = null;
-let currentLandmarks = null;
-let targetLandmarks = null;
-let targetVelocities = null;
-let currentColor = '#22c55e';
-let targetColor = '#22c55e';
-let currentAlpha = 0;
-let targetAlpha = 0;
-let lastUpdateTime = 0;
+// State per canvas: modal latihan, kartu dashboard, dan PiP bisa menggambar bersamaan
+// tanpa saling merebut satu-satunya canvas aktif (penyebab skeleton membeku).
+const canvasStates = new Map();
 let animationFrameId = null;
-let sideView = false;
+const poseListeners = new Set();
+
+function createState() {
+  return {
+    currentLandmarks: null,
+    targetLandmarks: null,
+    targetVelocities: null,
+    currentColor: '#22c55e',
+    targetColor: '#22c55e',
+    currentAlpha: 0,
+    targetAlpha: 0,
+    lastUpdateTime: 0,
+    sideView: false,
+  };
+}
 
 const LERP_FACTOR = 0.30;
 const FAST_LERP_FACTOR = 0.52;
@@ -27,40 +35,47 @@ const MAX_PREDICTION_MS = 120;
 const FADE_TIMEOUT_MS = 900; // Mulai memudarkan jika frame kosong > 900ms
 
 function renderLoop() {
-  if (!activeCanvas) {
-    animationFrameId = null;
-    return;
+  for (const [canvas, state] of canvasStates) {
+    if (!canvas.isConnected) {
+      canvasStates.delete(canvas);
+      continue;
+    }
+    renderCanvas(canvas, state);
   }
+  animationFrameId = canvasStates.size ? requestAnimationFrame(renderLoop) : null;
+}
 
+function renderCanvas(activeCanvas, state) {
   const ctx = activeCanvas.getContext('2d');
-  if (!ctx) {
-    animationFrameId = null;
-    return;
-  }
+  if (!ctx) return;
+  let { currentLandmarks, currentColor, currentAlpha } = state;
+  const { targetLandmarks, targetVelocities, targetColor, lastUpdateTime, sideView } = state;
 
   const now = performance.now();
   const timeSinceUpdate = now - lastUpdateTime;
 
   // Jika sudah terlalu lama tidak ada data baru, pudarkan secara bertahap
   if (timeSinceUpdate > FADE_TIMEOUT_MS) {
-    targetAlpha = 0;
+    state.targetAlpha = 0;
   }
 
   // Interpolasi opacity agar tidak kedat-kedut saat frame sempat drop
-  currentAlpha += (targetAlpha - currentAlpha) * 0.15;
+  currentAlpha += (state.targetAlpha - currentAlpha) * 0.15;
+  state.currentAlpha = currentAlpha;
   if (currentAlpha < 0.01) {
     ctx.clearRect(0, 0, activeCanvas.width, activeCanvas.height);
-    animationFrameId = requestAnimationFrame(renderLoop);
     return;
   }
 
   // Update warna target
   currentColor = targetColor;
+  state.currentColor = currentColor;
 
   // LERP posisi setiap sendi kerangka (Interpolasi 60 FPS)
   if (targetLandmarks && targetLandmarks.length > 0) {
     if (!currentLandmarks || currentLandmarks.length !== targetLandmarks.length) {
       currentLandmarks = targetLandmarks.map((pt) => ({ ...pt }));
+      state.currentLandmarks = currentLandmarks;
     } else {
       for (let i = 0; i < targetLandmarks.length; i++) {
         const tgt = targetLandmarks[i];
@@ -94,10 +109,7 @@ function renderLoop() {
   const h = activeCanvas.height;
   ctx.clearRect(0, 0, w, h);
 
-  if (!currentLandmarks || currentLandmarks.length === 0) {
-    animationFrameId = requestAnimationFrame(renderLoop);
-    return;
-  }
+  if (!currentLandmarks || currentLandmarks.length === 0) return;
 
   ctx.save();
   ctx.globalAlpha = currentAlpha;
@@ -205,17 +217,21 @@ function renderLoop() {
   }
 
   ctx.restore();
-  animationFrameId = requestAnimationFrame(renderLoop);
 }
 
 export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55e', cameraMode = 'upper_body') {
   if (!canvas) return;
-  sideView = cameraMode === 'full_torso';
-  activeCanvas = canvas;
+  let state = canvasStates.get(canvas);
+  if (!state) {
+    state = createState();
+    canvasStates.set(canvas, state);
+  }
+  state.sideView = cameraMode === 'full_torso';
+  const { sideView, lastUpdateTime } = state;
 
   if (rawLandmarks && rawLandmarks.length > 0) {
     const now = performance.now();
-    const previousTargets = targetLandmarks;
+    const previousTargets = state.targetLandmarks;
     const elapsedSeconds = Math.max(0.04, Math.min(0.5, (now - lastUpdateTime) / 1000));
     const nextTargets = previousTargets?.length === rawLandmarks.length
       ? rawLandmarks.map((point, index) => {
@@ -234,11 +250,11 @@ export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55
           return { ...point, x: previous.x, y: previous.y, z: previous.z };
         })
       : rawLandmarks;
-    targetVelocities = nextTargets.map((point, index) => {
+    state.targetVelocities = nextTargets.map((point, index) => {
       const previous = previousTargets?.[index];
       if (!previous) return { x: 0, y: 0 };
       const displacement = Math.hypot(point.x - previous.x, point.y - previous.y);
-      const oldVelocity = targetVelocities?.[index] || { x: 0, y: 0 };
+      const oldVelocity = state.targetVelocities?.[index] || { x: 0, y: 0 };
       if (displacement < VELOCITY_GATE) {
         return { x: oldVelocity.x * 0.15, y: oldVelocity.y * 0.15 };
       }
@@ -251,13 +267,13 @@ export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55
       }
       return { x: oldVelocity.x * 0.4 + x * 0.6, y: oldVelocity.y * 0.4 + y * 0.6 };
     });
-    targetLandmarks = nextTargets;
-    targetColor = statusColor;
-    targetAlpha = 1.0;
-    lastUpdateTime = now;
+    state.targetLandmarks = nextTargets;
+    state.targetColor = statusColor;
+    state.targetAlpha = 1.0;
+    state.lastUpdateTime = now;
   } else {
     // Jangan langsung hapus seketika, tandai target alpha turun perlahan
-    targetAlpha = 0.0;
+    state.targetAlpha = 0.0;
   }
 
   if (!animationFrameId) {
@@ -266,21 +282,22 @@ export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55
 }
 
 export function clearSkeletonCanvas(canvas) {
-  if (animationFrameId) {
+  if (!canvas) return;
+  canvasStates.delete(canvas);
+  const ctx = canvas.getContext('2d');
+  if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!canvasStates.size && animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
   }
-  activeCanvas = null;
-  currentLandmarks = null;
-  targetLandmarks = null;
-  targetVelocities = null;
-  targetAlpha = 0;
-  currentAlpha = 0;
+}
 
-  if (canvas) {
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
+// Siaran frame pose terbaru (dari pelacak lokal/server) untuk tampilan lain, mis. kamera dashboard
+export function publishPoseFrame(landmarks, color, cameraMode) {
+  for (const listener of poseListeners) listener(landmarks, color, cameraMode);
+}
+
+export function subscribePoseFrames(listener) {
+  poseListeners.add(listener);
+  return () => poseListeners.delete(listener);
 }
