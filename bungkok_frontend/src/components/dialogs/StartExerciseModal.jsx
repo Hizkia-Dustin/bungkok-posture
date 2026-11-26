@@ -5,6 +5,7 @@ import PhoneCameraModal from "../camera/PhoneCameraModal";
 import { useApp } from "../../context/AppContext";
 import { usePostureMonitor } from "../../context/PostureMonitorContext";
 import { Button, Progress } from "../common/SoftUI";
+import Dialog from "../common/Dialog";
 import { activeCameraFrame, FrameArtwork } from "../common/CameraFrame";
 import { clockLabel } from "../../utils/exercise";
 import { playReminder } from "../../utils/exportData";
@@ -105,6 +106,7 @@ export default function StartExerciseModal({ closeRequest }) {
   const [result, setResult] = useState(null);
   const [celebrate, setCelebrate] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [finishing, setFinishing] = useState(false);
   const [activeSession, setActiveSession] = useState(null);
   const [cancellingSession, setCancellingSession] = useState(false);
   const [reminderNotice, setReminderNotice] = useState("");
@@ -206,6 +208,8 @@ export default function StartExerciseModal({ closeRequest }) {
   const engineVideo = useRef(null);
   const canvas = useRef(null);
   const localTrackingReady = useRef(false);
+  // true selama worker MediaPipe lokal hidup; landmark server (telat karena jaringan) tidak digambar
+  const localTrackerActive = useRef(false);
   const localLandmarks = useRef([]);
   const localVisualColor = useRef("#22c55e");
   const lastLocalSnapshot = useRef(0);
@@ -472,18 +476,18 @@ export default function StartExerciseModal({ closeRequest }) {
     startLocalPoseTracker({
       video: captureSource,
       maxFps: 18,
+      onReady: () => {
+        if (!cancelled) localTrackerActive.current = true;
+      },
       onLandmarks: (landmarks) => {
         if (cancelled || !monitorOpen.current) return;
-        if (!landmarks.length) {
-          localTrackingReady.current = false;
-          localLandmarks.current = [];
-          return;
-        }
+        // Frame kosong sesaat diabaikan; skeletonDrawer memudar sendiri jika pose hilang > 900ms
+        if (!landmarks.length) return;
 
         localTrackingReady.current = true;
         localLandmarks.current = landmarks;
         lastLocalLandmarksAt.current = performance.now();
-        drawSkeletonOnCanvas(canvas.current, landmarks, localVisualColor.current);
+        drawSkeletonOnCanvas(canvas.current, landmarks, localVisualColor.current, povMode);
 
         const now = performance.now();
         if (landmarks.length && now - lastLocalSnapshot.current >= 350) {
@@ -491,18 +495,23 @@ export default function StartExerciseModal({ closeRequest }) {
           setVisualFrame({ landmarks, color: localVisualColor.current });
         }
       },
-      onError: () => {
+      onError: (failure) => {
+        localTrackerActive.current = false;
         localTrackingReady.current = false;
+        console.warn("[pose] Pelacak lokal berhenti, overlay memakai landmark server.", failure);
       },
     }).then((stop) => {
       if (cancelled) stop();
       else stopTracker = stop;
-    }).catch(() => {
+    }).catch((failure) => {
+      localTrackerActive.current = false;
       localTrackingReady.current = false;
+      console.warn("[pose] Pelacak lokal gagal dimuat, overlay memakai landmark server.", failure);
     });
 
     return () => {
       cancelled = true;
+      localTrackerActive.current = false;
       localTrackingReady.current = false;
       localLandmarks.current = [];
       stopTracker?.();
@@ -614,10 +623,10 @@ export default function StartExerciseModal({ closeRequest }) {
 
             res.displayTitle = statusTitle;
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
+            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
           } else {
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
+            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
           }
         }
         // KASUS B: Tahap Persiapan & Kalibrasi (Step 0, 1, 2)
@@ -650,7 +659,7 @@ export default function StartExerciseModal({ closeRequest }) {
               .find((item) => item.isUpright === isUpright)?.feedback;
             const boneColor = isUpright ? "#22c55e" : "#f59e0b";
             updateVisualFrame(res.landmarks, boneColor);
-            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
+            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks, boneColor, povMode);
             setAlignmentInfo({
               isUpright,
               feedback:
@@ -662,7 +671,7 @@ export default function StartExerciseModal({ closeRequest }) {
             sideAlignmentUpright.current = null;
             alignmentHistory.current = [];
             updateVisualFrame(res.landmarks, "#ef4444");
-            if (monitorOpen.current && !hasFreshLocalLandmarks()) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
+            if (monitorOpen.current && !localTrackerActive.current) drawSkeletonOnCanvas(canvas.current, res.landmarks || [], "#ef4444", povMode);
             setAlignmentInfo({
               isUpright: false,
               feedback: res.reason || "Pastikan tubuh berada di dalam kamera.",
@@ -750,6 +759,7 @@ export default function StartExerciseModal({ closeRequest }) {
   const finish = async () => {
     if (!running.current) return;
     running.current = false;
+    setFinishing(true);
     try {
       if (testMode) {
         await cancelActiveSession(sessionId.current);
@@ -767,6 +777,8 @@ export default function StartExerciseModal({ closeRequest }) {
       running.current = true;
       setError(failure.message);
       return;
+    } finally {
+      setFinishing(false);
     }
     setStep(4);
     setConfirmEnd(false);
@@ -1420,15 +1432,27 @@ export default function StartExerciseModal({ closeRequest }) {
                   </Button>
                 </div>
                 {confirmEnd && (
-                  <div className="exercise-confirm">
-                    <p>{testMode ? 'Akhiri pengujian? Data uji tidak akan masuk ke riwayat.' : 'Akhiri sesi dan simpan hasil ke riwayat?'}</p>
-                    <Button primary onClick={finish}>
-                      {testMode ? 'Ya, akhiri pengujian' : 'Ya, simpan hasil'}
-                    </Button>
-                    <Button onClick={() => setConfirmEnd(false)}>
-                      Lanjut berlatih
-                    </Button>
-                  </div>
+                  <Dialog
+                    title={testMode ? "Konfirmasi akhiri pengujian" : "Konfirmasi simpan sesi"}
+                    className="exercise-confirm-dialog"
+                    onClose={() => !finishing && setConfirmEnd(false)}
+                  >
+                    <h2>{testMode ? "Akhiri pengujian?" : "Simpan hasil latihan?"}</h2>
+                    <p>
+                      {testMode
+                        ? "Data uji tidak akan masuk ke riwayat."
+                        : `Sesi ${clockLabel(live.current.total)} akan diakhiri dan hasilnya disimpan ke riwayat. Sesi yang sudah disimpan tidak bisa dilanjutkan.`}
+                    </p>
+                    {error && <p className="form-error" role="alert">{error}</p>}
+                    <div className="dialog-actions">
+                      <Button primary disabled={finishing} onClick={finish}>
+                        {finishing ? "Menyimpan…" : testMode ? "Ya, akhiri pengujian" : "Ya, simpan hasil"}
+                      </Button>
+                      <Button disabled={finishing} onClick={() => setConfirmEnd(false)}>
+                        Lanjut berlatih
+                      </Button>
+                    </div>
+                  </Dialog>
                 )}
               </>
             )}

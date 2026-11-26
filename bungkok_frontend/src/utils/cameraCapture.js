@@ -20,7 +20,7 @@ export function captureFrameAsBlob(videoElement, maxWidth = 480, quality = 0.78)
 
     if (!offscreenCanvas) {
       offscreenCanvas = document.createElement('canvas');
-      offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
+      offscreenCtx = offscreenCanvas.getContext('2d');
     }
 
     if (offscreenCanvas.width !== width || offscreenCanvas.height !== height) {
