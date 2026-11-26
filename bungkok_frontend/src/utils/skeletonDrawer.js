@@ -158,9 +158,13 @@ function renderCanvas(activeCanvas, state) {
     ctx.stroke();
   }
 
-  // 1. Wajah
-  line(0, 1, 3); line(1, 2, 3); line(2, 3, 3); line(3, 7, 3);
-  line(0, 4, 3); line(4, 5, 3); line(5, 6, 3); line(6, 8, 3);
+  // 1. Wajah. Titik mata/telinga model pose (lite) hanya perkiraan kasar: dari depan sering
+  // meleset ±20px (mis. jatuh di bingkai kacamata), jadi tampilan depan cukup hidung + leher.
+  // Dari samping telinga dipakai untuk sudut leher, jadi digambar.
+  if (sideView) {
+    line(0, 1, 3); line(1, 2, 3); line(2, 3, 3); line(3, 7, 3);
+    line(0, 4, 3); line(4, 5, 3); line(5, 6, 3); line(6, 8, 3);
+  }
 
   // 2. Bahu kiri ke kanan
   line(11, 12, 5);
@@ -197,7 +201,7 @@ function renderCanvas(activeCanvas, state) {
   }
 
   // 6. Titik-titik sendi (Joint Dots)
-  const activeJoints = [0, 7, 8, 11, 12];
+  const activeJoints = sideView ? [0, 7, 8, 11, 12] : [0, 11, 12];
   if (isLeftArmValid) activeJoints.push(13, 15);
   if (isRightArmValid) activeJoints.push(14, 16);
   if (currentLandmarks[23] && currentLandmarks[24] && (currentLandmarks[23].visibility || 0) > 0.35) {

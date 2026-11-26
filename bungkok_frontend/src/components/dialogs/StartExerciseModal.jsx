@@ -364,6 +364,13 @@ export default function StartExerciseModal({ closeRequest }) {
     });
   };
 
+  // Banner "Tegakkan kembali posturmu" langsung hilang begitu postur pulih,
+  // agar tidak bertentangan dengan kartu status yang sudah tegak.
+  const clearPostureReminder = () => {
+    clearTimeout(reminderTimer.current);
+    setReminderNotice("");
+  };
+
   const showPostureReminder = () => {
     const message = appConfig.reminder?.message
       || "Postur badanmu mulai bungkuk. Yuk, tegakkan kembali agar tetap nyaman dan fokus.";
@@ -593,6 +600,7 @@ export default function StartExerciseModal({ closeRequest }) {
               slouchConsecutiveFrames.current = 0;
               setPosture("upright");
               slouchWarningActive.current = false;
+              clearPostureReminder();
               if (document.hidden) updateBackgroundTabTitle("upright");
             } else if (res.upper_is_head_activity) {
               boneColor = "#0ea5e9";
@@ -600,6 +608,7 @@ export default function StartExerciseModal({ closeRequest }) {
               slouchConsecutiveFrames.current = 0;
               setPosture("upright");
               slouchWarningActive.current = false;
+              clearPostureReminder();
               if (document.hidden) updateBackgroundTabTitle("upright");
             } else if (pred === "tegak") {
               boneColor = "#22c55e"; // Hijau
@@ -607,6 +616,7 @@ export default function StartExerciseModal({ closeRequest }) {
               slouchConsecutiveFrames.current = 0;
               setPosture("upright");
               slouchWarningActive.current = false;
+              clearPostureReminder();
               if (document.hidden) updateBackgroundTabTitle("upright");
             } else if (pred === "condong_depan" || pred === "condong_belakang") {
               slouchConsecutiveFrames.current++;
