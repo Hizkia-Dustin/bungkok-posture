@@ -613,7 +613,7 @@ export default function StartExerciseModal({ closeRequest }) {
               if (pred === "condong_depan") {
                 boneColor = "#ef4444"; // Merah
                 statusTitle =
-                  res.cervical_angle_deg && res.cervical_angle_deg > 16.0
+                  res.side_reason === "head_forward" || (res.cervical_angle_deg && res.cervical_angle_deg > 16.0)
                     ? "Kepalamu mulai terlalu maju"
                     : "Punggungmu mulai membungkuk";
                 setPosture("forward");

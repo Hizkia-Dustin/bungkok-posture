@@ -198,9 +198,34 @@ class PostureBackendV3:
         shoulder_span = abs(normalized[11].x - normalized[12].x) * width
         hip_span = abs(normalized[23].x - normalized[24].x) * width
         profile = max(shoulder_span, hip_span) / dy < 0.55
+
+        # Arah hadap: hidung berada di depan bahu. +1 = menghadap ke kanan frame.
+        mid_shoulder_x = (normalized[11].x + normalized[12].x) / 2.0
+        facing = 1.0 if normalized[0].x >= mid_shoulder_x else -1.0
+
+        # Leher maju (forward head): sudut garis bahu→telinga dari vertikal, positif = kepala di depan bahu.
+        # Ini yang terlihat saat membungkuk ke laptop walau garis bahu–pinggul masih hampir tegak.
+        necks = []
+        for ear, shoulder in ((7, 11), (8, 12)):
+            e, s = normalized[ear], normalized[shoulder]
+            confidence = min(float(e.visibility or 0), float(s.visibility or 0))
+            up = (s.y - e.y) * height
+            if confidence >= 0.5 and up > 0:
+                necks.append((confidence ** 4, (e.x - s.x) * width * facing, up))
+        neck_flexion = None
+        if necks:
+            neck_weight = sum(n[0] for n in necks)
+            neck_dx = sum(n[0] * n[1] for n in necks) / neck_weight
+            neck_up = sum(n[0] * n[2] for n in necks) / neck_weight
+            neck_flexion = float(np.degrees(np.arctan2(neck_dx, neck_up)))
+
         return {
             "side_alignment_available": bool(profile),
             "side_torso_lean_deg": float(np.degrees(np.arctan2(abs(dx), dy))),
+            # Bertanda: positif = bahu condong ke depan dari pinggul, negatif = bersandar.
+            "side_torso_forward_deg": float(np.degrees(np.arctan2(dx * facing, dy))),
+            "side_neck_available": bool(profile) and neck_flexion is not None,
+            "side_neck_flexion_deg": neck_flexion,
         }
 
     @staticmethod
@@ -556,12 +581,23 @@ class PostureBackendV3:
         else:
             lean = result.get("v2_torso_lean_deg", 0.0)
             roll = result.get("v2_shoulder_roll_deg", 0.0)
+            side_cfg = self.config.get("side_alignment", {})
+            neck_forward = (
+                result.get("side_neck_available", False)
+                and result["side_neck_flexion_deg"] > side_cfg.get("max_neck_flexion_deg", 40.0)
+            )
             if result.get("side_alignment_available", False):
-                limit = self.config.get("side_alignment", {}).get("max_torso_lean_deg", 15.0)
-                is_upright = result["side_torso_lean_deg"] <= limit
+                limit = side_cfg.get("max_torso_lean_deg", 15.0)
+                is_upright = result["side_torso_lean_deg"] <= limit and not neck_forward
             else:
                 is_upright = (lean < 12.0) and (roll < 9.0)
-            feedback = "Posisi siap. Pertahankan duduk nyaman untuk kalibrasi." if is_upright else "Duduk lebih tegak dan pastikan kamera sejajar, lalu coba lagi."
+            # Cegah kalibrasi saat kepala sudah maju: baseline bungkuk membuat bungkuk berikutnya tak terdeteksi
+            if is_upright:
+                feedback = "Posisi siap. Pertahankan duduk nyaman untuk kalibrasi."
+            elif neck_forward:
+                feedback = "Tarik kepala ke belakang hingga telinga sejajar bahu, lalu coba lagi."
+            else:
+                feedback = "Duduk lebih tegak dan pastikan kamera sejajar, lalu coba lagi."
 
         result.update({
             "status": "ok",
@@ -618,12 +654,39 @@ class PostureBackendV3:
 
         # full_torso mode
         forward_baseline = float(np.median([s["v2_torso_forward_ratio"] for s in samples]))
+        necks = [s["side_neck_flexion_deg"] for s in samples if s.get("side_neck_available")]
+        torsos = [s["side_torso_forward_deg"] for s in samples if s.get("side_alignment_available")]
         return {
             "camera_mode": "full_torso",
             "forward_baseline": forward_baseline,
+            "baseline_side_neck_flexion": float(np.median(necks)) if necks else None,
+            "baseline_side_torso_forward": float(np.median(torsos)) if torsos else None,
             "valid_samples": len(samples),
             "rejected_samples": rejected,
         }
+
+    @staticmethod
+    def _side_view_label(
+        result: dict[str, Any], calibration: dict[str, Any], thresholds: dict[str, Any]
+    ) -> tuple[int, str | None]:
+        """Label tambahan kamera samping: 1 = condong depan, 2 = bersandar, 0 = tegak."""
+        if result.get("side_alignment_available"):
+            base_torso = calibration.get("baseline_side_torso_forward")
+            if base_torso is not None:
+                torso_delta = result["side_torso_forward_deg"] - float(base_torso)
+                if torso_delta >= thresholds.get("side_torso_forward_delta_deg", 12.0):
+                    return 1, "torso_forward"
+                if torso_delta <= thresholds.get("side_torso_backward_delta_deg", -12.0):
+                    return 2, "torso_backward"
+
+        if result.get("side_neck_available"):
+            neck = result["side_neck_flexion_deg"]
+            if neck >= thresholds.get("side_neck_flexion_max_deg", 45.0):
+                return 1, "head_forward"
+            base_neck = calibration.get("baseline_side_neck_flexion")
+            if base_neck is not None and neck - float(base_neck) >= thresholds.get("side_neck_flexion_delta_deg", 15.0):
+                return 1, "head_forward"
+        return 0, None
 
     def predict(self, image_path: str | Path, calibration: dict[str, Any]) -> dict[str, Any]:
         mode = calibration.get("camera_mode")
@@ -739,10 +802,17 @@ class PostureBackendV3:
         else:
             label = 0
 
+        # Lapisan 2D kamera samping (koordinat piksel, lebih stabil dari kedalaman 3D kamera HP):
+        # torso condong/bersandar relatif kalibrasi, dan kepala maju (forward head) absolut/relatif.
+        side_reason = None
+        if label == 0:
+            label, side_reason = self._side_view_label(result, calibration, thresholds)
+
         result.update({
             "status": "ok",
             "label": label,
             "prediction": labels[str(label)],
+            "side_reason": side_reason,
             "forward_delta": float(delta),
             "decision_margin": float(min(
                 abs(delta - thresholds["backward_delta_max"]),

@@ -130,7 +130,10 @@ Prioritaskan perubahan pada `posture_backend_v3_config.json`.
 #### Kamera samping
 
 - `side_alignment.max_torso_lean_deg`: batas kemiringan torso saat persiapan.
-- Kamera samping harus mengevaluasi garis bahu–pinggul, bukan kemiringan kepala saja.
+- `side_alignment.max_neck_flexion_deg`: batas kepala maju saat persiapan; mencegah kalibrasi dalam posisi bungkuk.
+- `thresholds.side_neck_flexion_max_deg` / `side_neck_flexion_delta_deg`: kepala maju (sudut bahu→telinga dari vertikal) secara absolut / relatif kalibrasi. Membungkuk ke laptop sering terlihat di sini walau garis bahu–pinggul masih tegak.
+- `thresholds.side_torso_forward_delta_deg` / `side_torso_backward_delta_deg`: condong/bersandar garis bahu–pinggul relatif kalibrasi, dalam koordinat piksel.
+- Kamera samping harus mengevaluasi garis bahu–pinggul **dan** posisi kepala terhadap bahu, bukan kemiringan kepala (roll) saja.
 - Jangan memakai titik lutut sebagai syarat utama jika kamera hanya menangkap torso.
 
 #### Visibilitas

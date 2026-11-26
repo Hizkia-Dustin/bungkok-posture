@@ -1,7 +1,7 @@
 {
   "model_name": "BUNGKOK_BACKEND_V3_CALIBRATED",
   "status": "BACKEND_CANDIDATE_REQUIRES_NEW_REAL_HOLDOUT",
-  "version": "3.5.0-head-activity-tolerance",
+  "version": "3.6.0-side-head-forward",
   "supported_modes": ["upper_body", "full_torso", "auto"],
   "labels": {
     "0": "tegak",
@@ -47,10 +47,15 @@
     "backward_delta_max": -0.12,
     "forward_delta_low": 0.21,
     "forward_delta_high": 0.30,
-    "forward_vertical_guard": 1.15
+    "forward_vertical_guard": 1.15,
+    "side_torso_forward_delta_deg": 12.0,
+    "side_torso_backward_delta_deg": -12.0,
+    "side_neck_flexion_max_deg": 45.0,
+    "side_neck_flexion_delta_deg": 15.0
   },
   "side_alignment": {
-    "max_torso_lean_deg": 15.0
+    "max_torso_lean_deg": 15.0,
+    "max_neck_flexion_deg": 40.0
   },
   "guards": {
     "exact_pose_count": 1,

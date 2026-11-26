@@ -129,3 +129,68 @@ def test_hidden_elbow_is_not_counted():
     points[13].visibility = .2
     points[15].x, points[15].y = .72, .25
     assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (False, False)
+
+
+def side_profile_landmarks(ear, nose, shoulder=(.45, .33), hip=(.44, .85), mirror=False):
+    """Kamera HP dari samping, pengguna menghadap kiri frame (mirror=True → menghadap kanan)."""
+    flip = (lambda x: 1 - x) if mirror else (lambda x: x)
+    points = [SimpleNamespace(x=.5, y=.5, visibility=.9) for _ in range(33)]
+    for idx, (x, y) in ((0, nose), (7, ear), (8, (ear[0] + .01, ear[1])),
+                        (11, shoulder), (12, (shoulder[0] + .01, shoulder[1])),
+                        (23, hip), (24, (hip[0] + .01, hip[1]))):
+        points[idx].x, points[idx].y = flip(x), y
+    return points
+
+
+HUNCHED = dict(ear=(.32, .24), nose=(.25, .30))   # kepala jauh di depan bahu (seperti mengetik di laptop)
+UPRIGHT = dict(ear=(.44, .18), nose=(.38, .22))   # telinga hampir tegak lurus di atas bahu
+
+
+@pytest.mark.parametrize('mirror', [False, True])
+def test_side_view_measures_forward_head_in_both_facings(mirror):
+    hunched = PostureBackendV3._side_alignment_features(side_profile_landmarks(**HUNCHED, mirror=mirror), 640, 480)
+    upright = PostureBackendV3._side_alignment_features(side_profile_landmarks(**UPRIGHT, mirror=mirror), 640, 480)
+    assert hunched['side_neck_available'] and upright['side_neck_available']
+    assert hunched['side_neck_flexion_deg'] > 55
+    assert upright['side_neck_flexion_deg'] < 10
+    # Garis bahu–pinggul tetap hampir tegak: inilah kenapa aturan lama meloloskan bungkuk ini
+    assert abs(hunched['side_torso_forward_deg']) < 5
+
+
+def test_side_view_flags_forward_head_even_with_straight_torso():
+    features = PostureBackendV3._side_alignment_features(side_profile_landmarks(**HUNCHED), 640, 480)
+    thresholds = {}
+    calibrated = {'baseline_side_neck_flexion': 5.0, 'baseline_side_torso_forward': 0.0}
+    assert PostureBackendV3._side_view_label(features, calibrated, thresholds) == (1, 'head_forward')
+    # Batas absolut tetap menangkap bungkuk walau kalibrasi lama tidak punya baseline leher
+    assert PostureBackendV3._side_view_label(features, {}, thresholds) == (1, 'head_forward')
+
+
+def test_side_view_keeps_upright_and_light_screen_glance():
+    upright = PostureBackendV3._side_alignment_features(side_profile_landmarks(**UPRIGHT), 640, 480)
+    calibrated = {'baseline_side_neck_flexion': 5.0, 'baseline_side_torso_forward': 0.0}
+    assert PostureBackendV3._side_view_label(upright, calibrated, {}) == (0, None)
+    glance = {'side_alignment_available': True, 'side_torso_forward_deg': 3.0,
+              'side_neck_available': True, 'side_neck_flexion_deg': 17.0}
+    assert PostureBackendV3._side_view_label(glance, calibrated, {}) == (0, None)
+
+
+@pytest.mark.parametrize('torso,expected', [(15.0, (1, 'torso_forward')), (-14.0, (2, 'torso_backward'))])
+def test_side_view_torso_lean_relative_to_calibration(torso, expected):
+    features = {'side_alignment_available': True, 'side_torso_forward_deg': torso,
+                'side_neck_available': True, 'side_neck_flexion_deg': 8.0}
+    calibrated = {'baseline_side_neck_flexion': 8.0, 'baseline_side_torso_forward': 1.0}
+    assert PostureBackendV3._side_view_label(features, calibrated, {}) == expected
+
+
+def test_side_calibration_rejects_forward_head():
+    model = PostureBackendV3.__new__(PostureBackendV3)
+    model.config = {}
+    features = PostureBackendV3._side_alignment_features(side_profile_landmarks(**HUNCHED), 640, 480)
+    model.extract = lambda *args, **kwargs: {
+        'status': 'features_ready', 'camera_mode': 'full_torso',
+        'v2_torso_lean_deg': 3, 'v2_shoulder_roll_deg': 2, **features,
+    }
+    result = model.detect('unused')
+    assert result['is_upright'] is False
+    assert 'telinga sejajar bahu' in result['alignment_feedback']
