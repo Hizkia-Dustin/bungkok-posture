@@ -117,28 +117,19 @@ function renderCanvas(activeCanvas, state) {
   // Hitung lebar bahu untuk anatomical guard lengan
   const ls = currentLandmarks[11];
   const rs = currentLandmarks[12];
-  let shoulderWidth = 0.25;
-  if (ls && rs) {
-    shoulderWidth = Math.max(0.12, Math.hypot(rs.x - ls.x, rs.y - ls.y));
-  }
-  const maxArmLength = shoulderWidth * 1.30;
-
-  // Validasi apakah lengan adalah milik pengguna asli (bukan tangan orang lain yang lewat).
-  // Aturan sama dengan backend (_arm_state): siku terlihat, panjang segmen sebanding
-  // lebar bahu, dan siku tetap di sisi bahunya sendiri.
+  const length = (a, b) => Math.hypot((a.x - b.x) * w, (a.y - b.y) * h);
+  const shoulderWidth = ls && rs ? length(ls, rs) : 0;
   const isArmValid = (sh, el, wr, opp) => {
-    if (!sh || !el || !wr || !opp) return false;
-    if ((wr.visibility || 0) < 0.38 || (el.visibility || 0) < 0.45) return false;
-    if (Math.hypot(wr.x - sh.x, wr.y - sh.y) > maxArmLength) return false;
-    const upperArm = Math.hypot(el.x - sh.x, el.y - sh.y);
-    const forearm = Math.hypot(wr.x - el.x, wr.y - el.y);
-    if (upperArm < shoulderWidth * 0.30 || upperArm > shoulderWidth * 1.10) return false;
-    if (forearm < shoulderWidth * 0.25 || forearm > shoulderWidth * 1.10) return false;
-    const ratio = forearm / upperArm;
-    if (ratio < 0.45 || ratio > 1.8) return false;
-    const ownSide = sh.x >= opp.x ? 1 : -1;
-    return (el.x - (sh.x + opp.x) / 2) * ownSide >= -0.25 * shoulderWidth;
+    if (!sh || !opp || !el || !wr || shoulderWidth < 0.05 * w) return false;
+    if (Math.min(sh.visibility, opp.visibility, el.visibility) < 0.45) return false;
+    const upper = length(sh, el) / shoulderWidth;
+    const side = sh.x >= opp.x ? 1 : -1;
+    if (upper < 0.20 || upper > 1.20 || (el.x - (sh.x + opp.x) / 2) * side * w < -0.25 * shoulderWidth) return false;
+    if (!visibleWrist(wr)) return el.visibility >= 0.75 && (sh.y - el.y) * h > 0.35 * shoulderWidth;
+    const lower = length(el, wr) / shoulderWidth;
+    return lower >= 0.18 && lower <= 1.15 && lower / upper >= 0.35 && lower / upper <= 2.2;
   };
+  const visibleWrist = p => p && p.visibility >= 0.38 && p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1;
   const isLeftArmValid = isArmValid(ls, currentLandmarks[13], currentLandmarks[15], rs);
   const isRightArmValid = isArmValid(rs, currentLandmarks[14], currentLandmarks[16], ls);
 
@@ -158,9 +149,6 @@ function renderCanvas(activeCanvas, state) {
     ctx.stroke();
   }
 
-  // 1. Wajah. Titik mata/telinga model pose (lite) hanya perkiraan kasar: dari depan sering
-  // meleset ±20px (mis. jatuh di bingkai kacamata), jadi tampilan depan cukup hidung + leher.
-  // Dari samping telinga dipakai untuk sudut leher, jadi digambar.
   if (sideView) {
     line(0, 1, 3); line(1, 2, 3); line(2, 3, 3); line(3, 7, 3);
     line(0, 4, 3); line(4, 5, 3); line(5, 6, 3); line(6, 8, 3);
@@ -186,11 +174,11 @@ function renderCanvas(activeCanvas, state) {
   // 4. Lengan (HANYA digambar jika terbukti lengan pengguna, bukan orang lain di background)
   if (isLeftArmValid) {
     line(11, 13, 4);
-    line(13, 15, 4);
+    if (visibleWrist(targetLandmarks[15])) line(13, 15, 4);
   }
   if (isRightArmValid) {
     line(12, 14, 4);
-    line(14, 16, 4);
+    if (visibleWrist(targetLandmarks[16])) line(14, 16, 4);
   }
 
   // 5. Torso / Pinggul jika ada
@@ -202,17 +190,19 @@ function renderCanvas(activeCanvas, state) {
 
   // 6. Titik-titik sendi (Joint Dots)
   const activeJoints = sideView ? [0, 7, 8, 11, 12] : [0, 11, 12];
-  if (isLeftArmValid) activeJoints.push(13, 15);
-  if (isRightArmValid) activeJoints.push(14, 16);
+  if (!sideView && targetLandmarks[2]?.faceEye && targetLandmarks[5]?.faceEye) activeJoints.push(2, 5);
+  if (isLeftArmValid) activeJoints.push(...(visibleWrist(targetLandmarks[15]) ? [13, 15] : [13]));
+  if (isRightArmValid) activeJoints.push(...(visibleWrist(targetLandmarks[16]) ? [14, 16] : [14]));
   if (currentLandmarks[23] && currentLandmarks[24] && (currentLandmarks[23].visibility || 0) > 0.35) {
     activeJoints.push(23, 24);
   }
 
   for (const idx of activeJoints) {
-    const pt = currentLandmarks[idx];
+    const eye = !sideView && (idx === 2 || idx === 5);
+    const pt = eye ? targetLandmarks[idx] : currentLandmarks[idx];
     if (!pt || (pt.visibility || 0) < 0.30) continue;
     ctx.beginPath();
-    ctx.arc(pt.x * w, pt.y * h, 5.5, 0, Math.PI * 2);
+    ctx.arc(pt.x * w, pt.y * h, eye ? 3.5 : 5.5, 0, Math.PI * 2);
     ctx.fillStyle = currentColor;
     ctx.fill();
     ctx.lineWidth = 2;
@@ -239,6 +229,7 @@ export function drawSkeletonOnCanvas(canvas, rawLandmarks, statusColor = '#22c55
     const elapsedSeconds = Math.max(0.04, Math.min(0.5, (now - lastUpdateTime) / 1000));
     const nextTargets = previousTargets?.length === rawLandmarks.length
       ? rawLandmarks.map((point, index) => {
+          if (point.faceEye) return point;
           const previous = previousTargets[index];
           const deadZone = sideView ? 0.005 : index <= 10 ? FACE_DEAD_ZONE : TARGET_DEAD_ZONE;
           if (sideView && previous) {

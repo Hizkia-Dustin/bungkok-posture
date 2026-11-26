@@ -60,7 +60,7 @@ def owned_session(db, session_id, user):
 
 def empty_metrics():
     return dict.fromkeys(['total', 'upright', 'forward', 'backward', 'unknown', 'paused', 'breaks',
-                         'reminders', 'uprightStreak', 'longestUpright', 'leanStreak'], 0)
+                         'reminders', 'stretches', 'uprightStreak', 'longestUpright', 'leanStreak'], 0)
 
 
 def snapshot(row, now=None):
@@ -94,6 +94,19 @@ def record_prediction(db, row, result):
         m['uprightStreak'] = m['leanStreak'] = 0
         m['labelWindow'], m['stableLabel'] = [raw_label], raw_label
         label = raw_label
+        m['armFrames'] = 0
+    if raw_label != 'unknown' and 'upper_is_arm_activity' in result:
+        raised = bool(result['upper_is_arm_activity'])
+        count = m.get('armFrames', 0)
+        count = min(2, max(count, 0) + 1) if raised else max(-2, min(count, 0) - 1)
+        m['armFrames'] = count
+        if count == 2 and not m.get('stretchHeld'):
+            m['stretches'] = m.get('stretches', 0) + 1
+            m['stretchHeld'] = True
+        elif count == -2:
+            m['stretchHeld'] = False
+    else:
+        m['armFrames'] = 0
     if label != 'unknown':
         m[label] += elapsed
     m['uprightStreak'] = m['uprightStreak'] + elapsed if label == 'upright' else 0
@@ -135,7 +148,7 @@ def finish_session(db, row, owner):
         uprightPercentage=round(m['upright'] / valid * 100) if valid else 0,
         forwardLean=minute(m['forward']), backwardLean=minute(m['backward']),
         pauseDuration=minute(m['paused']), unmonitoredDuration=minute(m['unknown']),
-        remindersCount=m['reminders'], breaks=m['breaks'], coverage=coverage,
+        stretchCount=m.get('stretches', 0), remindersCount=m['reminders'], breaks=m['breaks'], coverage=coverage,
         pointsEarned=points, eligible=eligible, status='Selesai', simulation=False, config=row.config)
     state = owner.state
     previous = state['user']['points']

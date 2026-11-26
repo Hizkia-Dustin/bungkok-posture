@@ -105,7 +105,7 @@ def test_own_raised_arm_counts_as_arm_activity():
     points = front_arm_landmarks()
     points[13].x, points[13].y = .75, .40   # siku naik di sisi sendiri
     points[15].x, points[15].y = .72, .25   # pergelangan di atas bahu
-    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (True, True)
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12) == (True, True)
 
 
 def test_friend_hand_attached_to_user_wrist_is_rejected():
@@ -113,7 +113,7 @@ def test_friend_hand_attached_to_user_wrist_is_rejected():
     # Siku pengguna masih di bawah (santai), tapi "pergelangan" melompat ke tangan teman di atas
     points[13].x, points[13].y = .70, .80
     points[15].x, points[15].y = .80, .32
-    valid, raised = PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30)
+    valid, raised = PostureBackendV3._arm_state(points, 11, 13, 15, 12)
     assert not raised
 
 
@@ -121,14 +121,14 @@ def test_elbow_crossing_to_other_side_is_rejected():
     points = front_arm_landmarks()
     points[13].x, points[13].y = .38, .42   # "siku kiri" muncul di sisi bahu kanan
     points[15].x, points[15].y = .40, .28
-    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (False, False)
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12) == (False, False)
 
 
 def test_hidden_elbow_is_not_counted():
     points = front_arm_landmarks()
     points[13].visibility = .2
     points[15].x, points[15].y = .72, .25
-    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (False, False)
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12) == (False, False)
 
 
 def side_profile_landmarks(ear, nose, shoulder=(.45, .33), hip=(.44, .85), mirror=False):
@@ -194,3 +194,42 @@ def test_side_calibration_rejects_forward_head():
     result = model.detect('unused')
     assert result['is_upright'] is False
     assert 'telinga sejajar bahu' in result['alignment_feedback']
+
+@pytest.mark.parametrize("width,height", [(640, 480), (1280, 720)])
+def test_straight_overhead_arm_counts_in_pixel_geometry(width, height):
+    points = front_arm_landmarks()
+    points[11].y = points[12].y = .90
+    for idx, distance in [(13, .23), (15, .45)]:
+        points[idx].x = .65
+        points[idx].y = .90 - distance * width / height
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, height / width) == (True, True)
+    points[15].visibility = .1
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, height / width) == (True, True)
+
+
+def test_stretch_count_requires_a_hold_and_release(monkeypatch):
+    row = SimpleNamespace(started_at=99, ended_at=None, paused=0, pause_started_at=None,
+                          last_sample_at=99, metrics=empty_metrics(), config={'mode': 'work'}, id='test')
+    db = SimpleNamespace(add=lambda _: None)
+    monkeypatch.setattr('session_service.time.time', lambda: row.last_sample_at + .5)
+    counts = []
+    for raised in (True, False, True, True, True, None, True, False, False, True, True):
+        frame = {'status': 'ok', 'label': 0, 'upper_is_arm_activity': raised} if raised is not None else {}
+        counts.append(record_prediction(db, row, frame)['metrics']['stretches'])
+    assert counts == [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2]
+
+
+def test_face_match_requires_one_face_at_the_pose_nose():
+    nose = SimpleNamespace(x=.5, y=.40)
+    def face(x):
+        return SimpleNamespace(keypoints=[SimpleNamespace(x=x+dx, y=y)
+                               for dx, y in ((-.05,.35),(.05,.35),(0,.40),(0,.45))])
+    model = PostureBackendV3.__new__(PostureBackendV3)
+    image = SimpleNamespace(width=640, height=480)
+    candidates = [face(.8), face(.5)]
+    model.face_detector = SimpleNamespace(detect=lambda _: SimpleNamespace(detections=candidates))
+    assert model._matched_face(image, [nose]) is candidates[1].keypoints
+    candidates.append(face(.51))
+    assert model._matched_face(image, [nose]) is None
+    candidates[:] = [face(.8)]
+    assert model._matched_face(image, [nose]) is None

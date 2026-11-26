@@ -33,6 +33,11 @@ class PostureBackendV3:
             num_poses=2,
         )
         self.detector = mp.tasks.vision.PoseLandmarker.create_from_options(options)
+        face_options = mp.tasks.vision.FaceDetectorOptions(
+            base_options=mp.tasks.BaseOptions(model_asset_path=str(Path(pose_model_path).with_name("blaze_face_short_range.tflite"))),
+            min_detection_confidence=0.7,
+        )
+        self.face_detector = mp.tasks.vision.FaceDetector.create_from_options(face_options)
         self.last_user_center: tuple[float, float] | None = None
 
     def _score_pose_candidate(self, p_landmarks: Any) -> float:
@@ -75,6 +80,7 @@ class PostureBackendV3:
 
     def close(self) -> None:
         self.detector.close()
+        self.face_detector.close()
 
     def __enter__(self) -> "PostureBackendV3":
         return self
@@ -230,7 +236,7 @@ class PostureBackendV3:
 
     @staticmethod
     def _arm_state(
-        normalized: Any, sh_idx: int, el_idx: int, wr_idx: int, opp_sh_idx: int, shoulder_width: float
+        normalized: Any, sh_idx: int, el_idx: int, wr_idx: int, opp_sh_idx: int, y_scale: float = 1.0
     ) -> tuple[bool, bool]:
         """Validasi anatomis lengan: (lengan milik pengguna?, terangkat?).
 
@@ -243,35 +249,46 @@ class PostureBackendV3:
         el = normalized[el_idx]
         wr = normalized[wr_idx]
         opp = normalized[opp_sh_idx]
-        if float(wr.visibility or 0.0) < 0.38 or float(el.visibility or 0.0) < 0.45:
+        if min(sh.visibility or 0, opp.visibility or 0, el.visibility or 0) < 0.45:
             return False, False
+        # Express both axes in units of image width, including on a widescreen webcam.
+        def length(a, b):
+            return float(np.hypot(a.x - b.x, (a.y - b.y) * y_scale))
 
-        # Jangkauan fisik tangan manusia maksimal ~1.28x lebar bahu di frame
-        reach = float(np.hypot(wr.x - sh.x, wr.y - sh.y))
-        if reach > 1.28 * shoulder_width:
+        shoulder_width = length(sh, opp)
+        if shoulder_width < 0.05:
             return False, False
-
-        upper_arm = float(np.hypot(el.x - sh.x, el.y - sh.y))
-        forearm = float(np.hypot(wr.x - el.x, wr.y - el.y))
-        if not (0.30 * shoulder_width <= upper_arm <= 1.10 * shoulder_width):
+        upper_arm = length(el, sh) / shoulder_width
+        mid_x = (sh.x + opp.x) / 2
+        own_side = 1 if sh.x >= opp.x else -1
+        if not 0.20 <= upper_arm <= 1.20 or (el.x - mid_x) * own_side < -0.25 * shoulder_width:
             return False, False
-        if not (0.25 * shoulder_width <= forearm <= 1.10 * shoulder_width):
+        elbow_lift = (sh.y - el.y) * y_scale / shoulder_width
+        if (wr.visibility or 0) < 0.38 or not (0 <= wr.x <= 1 and 0 <= wr.y <= 1):
+            # A clearly raised elbow is still visible when the hand leaves the top of the frame.
+            raised = elbow_lift > 0.35 and (el.visibility or 0) >= 0.75 and 0 <= el.y <= 1
+            return raised, raised
+        forearm = length(wr, el) / shoulder_width
+        if not 0.18 <= forearm <= 1.15 or not 0.35 <= forearm / upper_arm <= 2.2:
             return False, False
-        if not 0.45 <= forearm / upper_arm <= 1.8:
-            return False, False
-
-        # Siku tidak boleh menyeberang jauh melewati garis tengah bahu ke sisi lawan
-        # (pergelangan boleh, misalnya saat menggaruk kepala)
-        mid_x = (sh.x + opp.x) / 2.0
-        own_side = 1.0 if sh.x >= opp.x else -1.0
-        if (el.x - mid_x) * own_side < -0.25 * shoulder_width:
-            return False, False
-
-        # Pergelangan terangkat di atas bahu
-        is_raised = bool(wr.y < (sh.y - 0.04) or el.y < (sh.y - 0.02))
+        is_raised = (sh.y - wr.y) * y_scale > 0.12 * shoulder_width or elbow_lift > 0.20
         return True, is_raised
 
-    def _upper_body_features(self, normalized: Any, world: Any) -> dict[str, Any]:
+    def _matched_face(self, image, pose):
+        nose = pose[0]
+        matches = []
+        for detection in self.face_detector.detect(image).detections:
+            points = detection.keypoints
+            if len(points) < 4:
+                continue
+            right, left, tip, mouth = points[:4]
+            span = abs(left.x - right.x)
+            distance = np.hypot(tip.x - nose.x, (tip.y - nose.y) * image.height / image.width)
+            if span > 0.015 and distance < 0.65 * span and mouth.y - tip.y > 0.004 and tip.y > (left.y + right.y) / 2:
+                matches.append(points)
+        return matches[0] if len(matches) == 1 else None
+
+    def _upper_body_features(self, normalized: Any, world: Any, y_scale: float, face) -> dict[str, Any]:
         ls_norm = normalized[11]
         rs_norm = normalized[12]
         nose_norm = normalized[0]
@@ -298,21 +315,16 @@ class PostureBackendV3:
         ear_right = normalized[8]
         ear_dx = ear_right.x - ear_left.x
         ear_dy = ear_right.y - ear_left.y
-        eye_left = normalized[2]
-        eye_right = normalized[5]
-        eye_dx = eye_right.x - eye_left.x
-        eye_dy = eye_right.y - eye_left.y
         ear_tilt = self._relative_roll_degrees(shoulder_dx, shoulder_dy, ear_dx, ear_dy)
-        eye_tilt = self._relative_roll_degrees(shoulder_dx, shoulder_dy, eye_dx, eye_dy)
-        # Median telinga dan mata lebih tahan jitter/oklusi kacamata daripada satu garis saja.
-        head_tilt_deg = float(np.median([ear_tilt, eye_tilt]))
-
-        # Facial vertical pitch (Mendongak vs Menunduk)
-        eye_y = (normalized[2].y + normalized[5].y) / 2.0
-        mouth_y = (normalized[9].y + normalized[10].y) / 2.0
-        eye_to_nose = max(1e-5, nose_norm.y - eye_y)
-        nose_to_mouth = max(1e-5, mouth_y - nose_norm.y)
-        pitch_ratio = float(eye_to_nose / nose_to_mouth)
+        head_tilt_deg = ear_tilt
+        pitch_ratio = 1.0
+        if face is not None:
+            right_eye, left_eye, face_nose, mouth = face[:4]
+            eye_tilt = self._relative_roll_degrees(shoulder_dx, shoulder_dy,
+                right_eye.x - left_eye.x, right_eye.y - left_eye.y)
+            head_tilt_deg = float(np.median([ear_tilt, eye_tilt]))
+            eye_y = (right_eye.y + left_eye.y) / 2
+            pitch_ratio = (face_nose.y - eye_y) / (mouth.y - face_nose.y)
         is_mendongak = pitch_ratio < 0.78
         is_menunduk = pitch_ratio > 1.28
 
@@ -336,8 +348,8 @@ class PostureBackendV3:
         # Head-to-shoulder ratio
         head_shoulder_ratio = float(np.hypot(ear_dx, ear_dy) / (shoulder_width_2d + 1e-8))
 
-        left_arm_valid, left_arm_raised = self._arm_state(normalized, 11, 13, 15, 12, shoulder_width_2d)
-        right_arm_valid, right_arm_raised = self._arm_state(normalized, 12, 14, 16, 11, shoulder_width_2d)
+        left_arm_valid, left_arm_raised = self._arm_state(normalized, 11, 13, 15, 12, y_scale)
+        right_arm_valid, right_arm_raised = self._arm_state(normalized, 12, 14, 16, 11, y_scale)
         is_arm_activity = left_arm_raised or right_arm_raised
 
         return {
@@ -352,6 +364,7 @@ class PostureBackendV3:
             "upper_cervical_angle_deg": cervical_angle_deg,
             "upper_head_shoulder_ratio": head_shoulder_ratio,
             "upper_pitch_ratio": pitch_ratio,
+            "upper_face_matched": face is not None,
             "upper_is_mendongak": is_mendongak,
             "upper_is_menunduk": is_menunduk,
             "upper_is_arm_activity": is_arm_activity,
@@ -437,19 +450,10 @@ class PostureBackendV3:
                     landmarks=serialized_landmarks,
                     camera_mode="upper_body",
                 )
-            upper_feats = self._upper_body_features(normalized, world)
-
-            # Sanitasi landmarks: jika lengan tidak valid (misal tangan orang lain yang lewat),
-            # nolkan visibility pergelangan dan siku agar tidak digambar garis kerangka ke tangan luar
-            sh_w = upper_feats["upper_shoulder_width"]
-            if not upper_feats.get("upper_left_arm_valid", True):
-                if float(np.hypot(normalized[15].x - normalized[11].x, normalized[15].y - normalized[11].y)) > (1.28 * sh_w):
-                    serialized_landmarks[13]["visibility"] = 0.0
-                    serialized_landmarks[15]["visibility"] = 0.0
-            if not upper_feats.get("upper_right_arm_valid", True):
-                if float(np.hypot(normalized[16].x - normalized[12].x, normalized[16].y - normalized[12].y)) > (1.28 * sh_w):
-                    serialized_landmarks[14]["visibility"] = 0.0
-                    serialized_landmarks[16]["visibility"] = 0.0
+            face = self._matched_face(image, normalized)
+            upper_feats = self._upper_body_features(normalized, world, image.height / image.width, face)
+            for idx, keypoint in zip((5, 2), face[:2] if face else ()):
+                serialized_landmarks[idx].update(x=keypoint.x, y=keypoint.y, visibility=1.0, faceEye=True)
 
             return {
                 "status": "features_ready",
@@ -638,7 +642,8 @@ class PostureBackendV3:
             baseline_ear_z = float(np.median([s["upper_ear_forward_z"] for s in samples]))
             baseline_cervical = float(np.median([s["upper_cervical_angle_deg"] for s in samples]))
             baseline_roll = float(np.median([s["upper_shoulder_roll"] for s in samples]))
-            baseline_pitch = float(np.median([s["upper_pitch_ratio"] for s in samples]))
+            face_pitches = [s["upper_pitch_ratio"] for s in samples if s["upper_face_matched"]]
+            baseline_pitch = float(np.median(face_pitches)) if face_pitches else 1.0
             return {
                 "camera_mode": "upper_body",
                 "baseline_neck_ratio": baseline_neck,
@@ -647,6 +652,7 @@ class PostureBackendV3:
                 "baseline_cervical_angle": baseline_cervical,
                 "baseline_shoulder_roll": baseline_roll,
                 "baseline_pitch_ratio": baseline_pitch,
+                "pitch_source": "face_detector",
                 "forward_baseline": baseline_forward_z,  # compatibility
                 "valid_samples": len(samples),
                 "rejected_samples": rejected,
@@ -704,19 +710,18 @@ class PostureBackendV3:
             base_z = float(calibration["baseline_forward_z"])
             base_ear_z = float(calibration.get("baseline_ear_forward_z", 0.02))
             base_cervical = float(calibration.get("baseline_cervical_angle", 7.0))
-            base_pitch = float(calibration.get("baseline_pitch_ratio", 0.95))
+            base_pitch = calibration.get("baseline_pitch_ratio", 1.0) if calibration.get("pitch_source") == "face_detector" else 1.0
 
             cur_neck = result["upper_neck_ratio"]
             cur_z = result["upper_forward_z"]
             cur_ear_z = result["upper_ear_forward_z"]
             cur_cervical = result["upper_cervical_angle_deg"]
-            cur_pitch = result["upper_pitch_ratio"]
+            cur_pitch = result["upper_pitch_ratio"] / max(base_pitch, 1e-5) if result["upper_face_matched"] else 1.0
 
             neck_drop = (cur_neck - base_neck) / (base_neck + 1e-6)
             z_delta = cur_z - base_z
             ear_z_delta = cur_ear_z - base_ear_z
             cervical_delta = cur_cervical - base_cervical
-            pitch_delta = cur_pitch - base_pitch
             upper_th = self.config.get("upper_body_thresholds", {})
 
             # Reclining / Leaning back / Mendongak ke atas
@@ -754,7 +759,7 @@ class PostureBackendV3:
             # Arm activity tolerance (scratching head, stretching arm)
             # If arms are raised but head gaze & pitch remain level, do not penalize as slouch
             is_arm_activity = result.get("upper_is_arm_activity", False)
-            if is_arm_activity and not result.get("upper_is_mendongak", False) and not result.get("upper_is_menunduk", False) and 0.78 <= cur_pitch <= 1.28:
+            if is_arm_activity and 0.78 <= cur_pitch <= 1.28:
                 is_forward = False
                 is_backward = False
 
@@ -771,6 +776,8 @@ class PostureBackendV3:
                 "prediction": labels[str(label)],
                 "neck_drop_ratio": float(neck_drop),
                 "pitch_ratio": float(cur_pitch),
+                "upper_is_mendongak": cur_pitch < 0.78,
+                "upper_is_menunduk": cur_pitch > 1.28,
                 "cervical_angle_deg": float(cur_cervical),
                 "cervical_delta": float(cervical_delta),
                 "ear_z_delta": float(ear_z_delta),

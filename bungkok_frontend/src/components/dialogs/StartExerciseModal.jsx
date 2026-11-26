@@ -505,6 +505,7 @@ export default function StartExerciseModal({ closeRequest }) {
 
     startLocalPoseTracker({
       video: captureSource,
+      frontView: povMode !== "full_torso",
       maxFps: 18,
       onReady: () => {
         if (!cancelled) localTrackerActive.current = true;
@@ -1338,6 +1339,7 @@ export default function StartExerciseModal({ closeRequest }) {
                       <div><dt>Total tegak</dt><dd>{clockLabel(metrics.upright)}</dd></div>
                       <div><dt>Terlama</dt><dd>{clockLabel(metrics.longestUpright)}</dd></div>
                       <div><dt>Persentase</dt><dd>{percent}%</dd></div>
+                      {povMode !== "full_torso" && <div><dt>Peregangan</dt><dd>{metrics.stretches || 0}</dd></div>}
                       <div><dt>Pengingat</dt><dd>{metrics.reminders}</dd></div>
                     </dl>
                   </>;
@@ -1443,6 +1445,7 @@ export default function StartExerciseModal({ closeRequest }) {
               ["Postur tegak", `${result.session.uprightPercentage}%`],
               ["Total waktu tegak", clockLabel(result.session.uprightSeconds)],
               ["Tegak berturut-turut terlama", clockLabel(result.session.longestUprightSeconds)],
+              ...(povMode !== "full_torso" ? [["Peregangan", `${result.session.stretchCount || 0} kali`]] : []),
               ["Pengingat", `${result.session.remindersCount} kali`],
               ["Jeda", result.session.pauseDuration],
               ["Waktu terpantau", `${result.session.coverage}%`],

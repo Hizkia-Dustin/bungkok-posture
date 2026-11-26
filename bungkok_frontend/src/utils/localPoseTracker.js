@@ -14,6 +14,7 @@ export async function startLocalPoseTracker({
   onReady,
   onError,
   maxFps = 18,
+  frontView = true,
 }) {
   const worker = new Worker(
     new URL("../workers/localPoseWorker.js", import.meta.url),
@@ -64,6 +65,7 @@ export async function startLocalPoseTracker({
 
   worker.postMessage({
     type: "init",
+    faceModelUrl: frontView ? new URL("/models/blaze_face_short_range.tflite", window.location.origin).href : null,
     modelUrl: new URL(MODEL_PATH, window.location.origin).href,
   });
 
