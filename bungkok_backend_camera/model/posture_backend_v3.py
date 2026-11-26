@@ -203,6 +203,49 @@ class PostureBackendV3:
             "side_torso_lean_deg": float(np.degrees(np.arctan2(abs(dx), dy))),
         }
 
+    @staticmethod
+    def _arm_state(
+        normalized: Any, sh_idx: int, el_idx: int, wr_idx: int, opp_sh_idx: int, shoulder_width: float
+    ) -> tuple[bool, bool]:
+        """Validasi anatomis lengan: (lengan milik pengguna?, terangkat?).
+
+        Tangan teman yang masuk frame sering ditempelkan MediaPipe ke pergelangan pengguna.
+        Lengan baru dianggap milik pengguna jika rantai bahu-siku-pergelangan masuk akal:
+        siku terlihat, panjang lengan atas & bawah sebanding lebar bahu, dan siku tetap
+        di sisi bahunya sendiri.
+        """
+        sh = normalized[sh_idx]
+        el = normalized[el_idx]
+        wr = normalized[wr_idx]
+        opp = normalized[opp_sh_idx]
+        if float(wr.visibility or 0.0) < 0.38 or float(el.visibility or 0.0) < 0.45:
+            return False, False
+
+        # Jangkauan fisik tangan manusia maksimal ~1.28x lebar bahu di frame
+        reach = float(np.hypot(wr.x - sh.x, wr.y - sh.y))
+        if reach > 1.28 * shoulder_width:
+            return False, False
+
+        upper_arm = float(np.hypot(el.x - sh.x, el.y - sh.y))
+        forearm = float(np.hypot(wr.x - el.x, wr.y - el.y))
+        if not (0.30 * shoulder_width <= upper_arm <= 1.10 * shoulder_width):
+            return False, False
+        if not (0.25 * shoulder_width <= forearm <= 1.10 * shoulder_width):
+            return False, False
+        if not 0.45 <= forearm / upper_arm <= 1.8:
+            return False, False
+
+        # Siku tidak boleh menyeberang jauh melewati garis tengah bahu ke sisi lawan
+        # (pergelangan boleh, misalnya saat menggaruk kepala)
+        mid_x = (sh.x + opp.x) / 2.0
+        own_side = 1.0 if sh.x >= opp.x else -1.0
+        if (el.x - mid_x) * own_side < -0.25 * shoulder_width:
+            return False, False
+
+        # Pergelangan terangkat di atas bahu
+        is_raised = bool(wr.y < (sh.y - 0.04) or el.y < (sh.y - 0.02))
+        return True, is_raised
+
     def _upper_body_features(self, normalized: Any, world: Any) -> dict[str, Any]:
         ls_norm = normalized[11]
         rs_norm = normalized[12]
@@ -268,26 +311,8 @@ class PostureBackendV3:
         # Head-to-shoulder ratio
         head_shoulder_ratio = float(np.hypot(ear_dx, ear_dy) / (shoulder_width_2d + 1e-8))
 
-        # Arm activity check dengan validasi anatomis
-        # Menolak tangan orang lain di background yang terdeteksi secara keliru
-        def check_arm_raised(sh_idx: int, el_idx: int, wr_idx: int) -> tuple[bool, bool]:
-            sh = normalized[sh_idx]
-            el = normalized[el_idx]
-            wr = normalized[wr_idx]
-            wr_vis = float(wr.visibility or 0.0)
-            if wr_vis < 0.38:
-                return False, False
-            # Jarak Euclidean pergelangan ke bahu
-            reach = float(np.hypot(wr.x - sh.x, wr.y - sh.y))
-            # Jangkauan fisik tangan manusia maksimal ~1.28x lebar bahu di frame
-            if reach > (1.28 * shoulder_width_2d):
-                return False, False
-            # Pergelangan terangkat di atas bahu
-            is_raised = bool(wr.y < (sh.y - 0.04) or el.y < (sh.y - 0.02))
-            return True, is_raised
-
-        left_arm_valid, left_arm_raised = check_arm_raised(11, 13, 15)
-        right_arm_valid, right_arm_raised = check_arm_raised(12, 14, 16)
+        left_arm_valid, left_arm_raised = self._arm_state(normalized, 11, 13, 15, 12, shoulder_width_2d)
+        right_arm_valid, right_arm_raised = self._arm_state(normalized, 12, 14, 16, 11, shoulder_width_2d)
         is_arm_activity = left_arm_raised or right_arm_raised
 
         return {

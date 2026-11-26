@@ -17,6 +17,22 @@ export function downloadAccountData({ user, sessions, pointsHistory }) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// AudioContext bersama: dibuka saat ada klik pengguna agar tetap boleh berbunyi
+// ketika tab di latar belakang / sedang memakai PiP (context baru di tab tersembunyi sering tertahan "suspended").
+let sharedAudio = null;
+function reminderAudio() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return null;
+  if (!sharedAudio || sharedAudio.state === 'closed') sharedAudio = new AudioContext();
+  return sharedAudio;
+}
+
+// Panggil langsung di handler klik (sebelum await) untuk membuka izin audio & ucapan
+export function primeReminderAudio() {
+  reminderAudio()?.resume().catch(() => {});
+  if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
+}
+
 export async function playReminder(volume = 60, reminder = {}) {
   if (reminder.mode !== 'tone' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
@@ -29,9 +45,8 @@ export async function playReminder(volume = 60, reminder = {}) {
     window.speechSynthesis.speak(utterance);
     return;
   }
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContext) throw new Error('Browser ini belum mendukung pemutaran suara.');
-  const audio = new AudioContext();
+  const audio = reminderAudio();
+  if (!audio) throw new Error('Browser ini belum mendukung pemutaran suara.');
   await audio.resume();
   const tone = audio.createOscillator();
   const gain = audio.createGain();
@@ -44,5 +59,4 @@ export async function playReminder(volume = 60, reminder = {}) {
   tone.connect(gain).connect(audio.destination);
   tone.start();
   tone.stop(audio.currentTime + .5);
-  tone.onended = () => audio.close();
 }

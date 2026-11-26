@@ -8,7 +8,7 @@ import { Button, Progress } from "../common/SoftUI";
 import Dialog from "../common/Dialog";
 import { activeCameraFrame, FrameArtwork } from "../common/CameraFrame";
 import { clockLabel } from "../../utils/exercise";
-import { playReminder } from "../../utils/exportData";
+import { playReminder, primeReminderAudio } from "../../utils/exportData";
 import { captureFrameAsBlob } from "../../utils/cameraCapture";
 import { startLocalPoseTracker } from "../../utils/localPoseTracker";
 import { startPictureInPictureComposer } from "../../utils/pictureInPictureComposer";
@@ -186,11 +186,15 @@ export default function StartExerciseModal({ closeRequest }) {
           }
         }
       } else {
-        // Tab kembali aktif dilihat pengguna: tutup PiP otomatis, kamera sudah terlihat di halaman
+        // Tab kembali aktif dilihat pengguna. PiP otomatis biasanya ditutup browser sendiri;
+        // menutupnya paksa bisa dianggap penolakan sehingga auto-PiP berikutnya tidak muncul.
+        // Jadi hanya tutup sebagai cadangan jika browser tidak menutupnya.
         resetTabTitle();
-        if (document.pictureInPictureElement && !manualPip.current) {
-          document.exitPictureInPicture().catch(() => {});
-        }
+        window.setTimeout(() => {
+          if (!document.hidden && document.pictureInPictureElement && !manualPip.current) {
+            document.exitPictureInPicture().catch(() => {});
+          }
+        }, 600);
       }
     };
 
@@ -347,11 +351,18 @@ export default function StartExerciseModal({ closeRequest }) {
     };
   }, []);
 
-  const sound = () =>
+  const lastReminderSoundAt = useRef(0);
+  // Suara pengingat yang sama (ucapan/nada dari admin) untuk tab aktif maupun saat PiP / tab lain,
+  // dibatasi tiap 6 detik agar tidak terpotong-potong saat bungkuk terdeteksi berturut-turut.
+  const sound = () => {
+    const now = Date.now();
+    if (now - lastReminderSoundAt.current < 6000) return;
+    lastReminderSoundAt.current = now;
     playReminder(user.reminderVolume, appConfig.reminder).catch(() => {
       if (alive.current)
         setError("Suara tidak tersedia; pengingat visual tetap aktif.");
     });
+  };
 
   const showPostureReminder = () => {
     const message = appConfig.reminder?.message
@@ -613,23 +624,21 @@ export default function StartExerciseModal({ closeRequest }) {
               }
 
               // Pemicu Pengingat Postur (Baik di Tab Aktif maupun di Background Tab Lain)
+              // Pengguna dianggap tidak melihat halaman jika tab tersembunyi, sedang memakai PiP,
+              // atau jendela browser tidak fokus (mis. sedang bekerja di aplikasi lain).
+              const userAway = document.hidden || Boolean(document.pictureInPictureElement) || !document.hasFocus();
+              if (userAway) {
+                const notifyTitle = pred === "condong_depan" ? "Badan kamu bungkuk" : "Posisimu terlalu bersandar";
+                const notifyBody = statusTitle + ". Tegakkan badan perlahan agar tetap nyaman.";
+                sendDesktopPostureNotification(notifyTitle, notifyBody);
+                window.bungkokDesktop?.notify?.({ title: notifyTitle, message: notifyBody });
+                if (settings.current.config.sound) sound();
+              }
               if (document.hidden) {
-                // Tab sedang di latar belakang: kirim Desktop Notification + Bunyi Chime + Ubah Judul Tab
-                sendDesktopPostureNotification(
-                  "Yuk, rapikan posisi duduk",
-                  statusTitle + ". Tegakkan badan perlahan agar tetap nyaman."
-                );
-                window.bungkokDesktop?.notify?.({
-                  title: "Yuk, rapikan posisi duduk",
-                  message: statusTitle + ". Tegakkan badan perlahan agar tetap nyaman.",
-                });
-                if (settings.current.config.sound) {
-                  playBackgroundChime(user.reminderVolume);
-                }
                 updateBackgroundTabTitle("slouch");
-              } else {
-                // Tab sedang aktif di depan mata pengguna
-                if (!slouchWarningActive.current) showPostureReminder();
+              } else if (!slouchWarningActive.current) {
+                // Tab terlihat: tampilkan juga pengingat di halaman
+                showPostureReminder();
               }
               slouchWarningActive.current = true;
             }
@@ -872,6 +881,7 @@ export default function StartExerciseModal({ closeRequest }) {
     slouchConsecutiveFrames.current = 0;
     startTime.current = new Date();
     sessionId.current = crypto.randomUUID();
+    primeReminderAudio();
     try {
       await startSession({ calibration_id: calibrationId.current, mode: config.mode, sound: config.sound, request_id: sessionId.current });
       running.current = true;
@@ -1275,104 +1285,58 @@ export default function StartExerciseModal({ closeRequest }) {
             )}
             {step === 3 && (
               <>
-                <span className="soft-tag">
-                  {config.mode === "work" ? "Mode Duduk Kerja" : "Koreksi Aktif"}
-                </span>
-                <span>Postur tegak berturut-turut</span>
-                <strong className="exercise-timer">
-                  {clockLabel(metrics.uprightStreak)}
-                </strong>
-                <small>
-                  Latihan berjalan {clockLabel(metrics.total)}
-                </small>
-                <div className="data-pair">
-                  <span>Total waktu tegak</span>
-                  <strong>{clockLabel(metrics.upright)}</strong>
-                </div>
-                <div className="data-pair">
-                  <span>Terjaga paling lama</span>
-                  <strong>{clockLabel(metrics.longestUpright)}</strong>
-                </div>
-
-                {/* AI REALTIME STATUS BADGE */}
-                {aiFeedback && (
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      background:
-                        aiFeedback.upper_is_arm_activity || aiFeedback.upper_is_head_activity
-                          ? "var(--polar)"
-                          : aiFeedback.prediction === "tegak"
-                            ? "#f0fdf4"
-                            : aiFeedback.prediction === "condong_depan"
-                              ? "#fef2f2"
-                              : "#fffbeb",
-                      border: `1.5px solid ${
-                        aiFeedback.upper_is_arm_activity || aiFeedback.upper_is_head_activity
-                          ? "var(--blue)"
-                          : aiFeedback.prediction === "tegak"
-                            ? "#86efac"
-                            : aiFeedback.prediction === "condong_depan"
-                              ? "#fca5a5"
-                              : "#fde047"
-                      }`,
-                      borderRadius: 12,
-                      fontSize: 13,
-                    }}
-                  >
-                    <div style={{ fontWeight: 800, fontSize: 14 }}>
-                      {aiFeedback.displayTitle ||
-                        (aiFeedback.upper_is_arm_activity
-                          ? "Sedang meregangkan tangan"
-                          : aiFeedback.upper_is_head_activity
-                            ? "Badanmu tetap tegak"
-                          : aiFeedback.prediction === "tegak"
-                            ? "Posturmu sudah pas"
-                            : "Punggungmu mulai membungkuk")}
+                {(() => {
+                  // Satu status gabungan: jeda > aktivitas tangan/kepala > prediksi AI > status lokal
+                  const activity = aiFeedback?.upper_is_arm_activity || aiFeedback?.upper_is_head_activity;
+                  const tone = paused ? "paused"
+                    : activity ? "info"
+                    : posture === "upright" ? "good"
+                    : posture === "unknown" ? "info"
+                    : posture === "forward" ? "bad" : "warn";
+                  const title = paused ? "Latihan dijeda"
+                    : aiFeedback?.displayTitle
+                      || (aiFeedback?.upper_is_arm_activity ? "Sedang meregangkan tangan"
+                        : aiFeedback?.upper_is_head_activity ? "Badanmu tetap tegak"
+                        : posture === "upright" ? "Posturmu sudah pas"
+                        : posture === "unknown" ? "Tubuh belum terpantau"
+                        : posture === "forward" ? "Punggungmu mulai membungkuk"
+                        : "Posisimu terlalu bersandar");
+                  const tip = paused ? "Pencatatan postur berhenti sampai kamu melanjutkan."
+                    : aiFeedback?.upper_is_arm_activity ? "Gerakan tangan tidak dihitung sebagai bungkuk."
+                    : aiFeedback?.upper_is_head_activity ? "Melihat HP atau ke samping tidak dihitung bungkuk selama badan stabil."
+                    : posture === "upright" ? "Pertahankan posisi nyaman ini."
+                    : posture === "unknown" ? "Pastikan kepala dan kedua bahu terlihat di kamera."
+                    : posture === "forward" ? "Tarik dagu perlahan ke belakang dan rilekskan bahu."
+                    : "Duduk sedikit lebih maju dan sejajarkan pandangan dengan layar.";
+                  return <>
+                    <div className="exercise-live-head">
+                      <span className="soft-tag">{config.mode === "work" ? "Mode Duduk Kerja" : "Koreksi Aktif"}</span>
+                      <small>Sesi berjalan <strong>{clockLabel(metrics.total)}</strong></small>
                     </div>
-                    {aiFeedback.upper_is_arm_activity ? (
-                      <div style={{ fontSize: 12, color: "var(--ink-secondary)", marginTop: 4 }}>
-                        ✓ Gerakan tangan terdeteksi — tidak dihitung sebagai bungkuk.
-                      </div>
-                    ) : aiFeedback.upper_is_head_activity ? (
-                      <div style={{ fontSize: 12, color: "var(--ink-secondary)", marginTop: 4 }}>
-                        ✓ Melihat HP atau ke samping tidak dihitung bungkuk selama badan tetap stabil.
-                      </div>
-                    ) : aiFeedback.z_delta !== undefined ? (
-                      <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>
-                        {aiFeedback.prediction === "tegak"
-                          ? "Pertahankan posisi nyaman ini."
-                          : aiFeedback.prediction === "condong_depan"
-                            ? "Tarik dagu perlahan ke belakang dan rilekskan bahu."
-                            : "Arahkan kembali pandangan sejajar dengan layar."}
-                      </div>
-                    ) : null}
-                  </div>
-                )}
 
-                <p
-                  role="status"
-                  className={
-                    posture === "upright"
-                      ? "exercise-good"
-                      : "exercise-warning"
-                  }
-                >
-                  {paused
-                    ? "Sedang jeda — pencatatan postur dihentikan"
-                    : posture === "upright"
-                      ? "Postur tegak terjaga dengan baik"
-                      : posture === "unknown"
-                        ? "Tubuh tidak terpantau"
-                        : "Punggung condong bungkuk, tegakkan kembali!"}
-                </p>
-                <strong>
-                  {percent}% tegak · {metrics.reminders} pengingat
-                </strong>
+                    <div className="exercise-live-hero">
+                      <span>Tegak berturut-turut</span>
+                      <strong className="exercise-timer">{clockLabel(metrics.uprightStreak)}</strong>
+                    </div>
 
-                {/* Kontrol Pendukung Produktivitas saat Bekerja di Tab / Aplikasi Lain */}
-                <div style={{ margin: "10px 0", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                    <div className={"exercise-live-status is-" + tone} role="status" aria-live="polite">
+                      <strong>{title}</strong>
+                      <small>{tip}</small>
+                    </div>
+
+                    <dl className="exercise-live-stats">
+                      <div><dt>Total tegak</dt><dd>{clockLabel(metrics.upright)}</dd></div>
+                      <div><dt>Terlama</dt><dd>{clockLabel(metrics.longestUpright)}</dd></div>
+                      <div><dt>Persentase</dt><dd>{percent}%</dd></div>
+                      <div><dt>Pengingat</dt><dd>{metrics.reminders}</dd></div>
+                    </dl>
+                  </>;
+                })()}
+
+                {/* Kontrol saat bekerja di tab / aplikasi lain */}
+                <div className="exercise-live-away" role="group" aria-label="Saat meninggalkan tab">
+                  <span>Saat meninggalkan tab</span>
+                  <div>
                     <Button
                       onClick={async () => {
                         try {
@@ -1384,61 +1348,36 @@ export default function StartExerciseModal({ closeRequest }) {
                       }}
                       title="Tampilkan layar video kecil mengambang di atas Word, Figma, atau VS Code"
                     >
-                      {isPipActive ? "Tutup layar kecil (PiP)" : "Buka layar kecil (PiP)"}
+                      {isPipActive ? "Tutup layar kecil" : "Buka layar kecil"}
                     </Button>
-
-                    <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer", background: autoPipEnabled ? "var(--blue)" : "var(--polar)", padding: "6px 10px", borderRadius: 8, border: "1px solid var(--line)", color: "var(--ink)" }}>
+                    <label>
                       <input
                         type="checkbox"
                         checked={autoPipEnabled}
                         onChange={(e) => setAutoPipEnabled(e.target.checked)}
-                        style={{ accentColor: "var(--pink)", cursor: "pointer" }}
                       />
-                      <span>Buka otomatis saat pindah tab</span>
+                      <span>Layar kecil otomatis</span>
                     </label>
-
-                    {isNotificationSupported() && notifPermission !== "granted" && (
-                      <button
-                        type="button"
-                        className="soft-button"
-                        style={{
-                          fontSize: 12,
-                          padding: "6px 12px",
-                          background: "var(--polar)",
-                          color: "var(--ink)",
-                          border: "1px solid var(--line)",
-                          cursor: "pointer",
-                          borderRadius: 8,
-                        }}
-                        onClick={async () => {
-                          const granted = await requestNotificationPermission();
-                          setNotifPermission(granted ? "granted" : "denied");
-                        }}
-                      >
-                        Izinkan notifikasi desktop
-                      </button>
-                    )}
-
-                    {isNotificationSupported() && notifPermission === "granted" && (
-                      <span style={{ color: "var(--ink-secondary)", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                        Notifikasi desktop aktif
-                      </span>
-                    )}
+                    {isNotificationSupported() && (notifPermission === "granted"
+                      ? <small className="exercise-live-note">Notifikasi desktop aktif</small>
+                      : <Button
+                          onClick={async () => {
+                            const granted = await requestNotificationPermission();
+                            setNotifPermission(granted ? "granted" : "denied");
+                          }}
+                        >
+                          Izinkan notifikasi
+                        </Button>)}
                   </div>
-
                 </div>
 
-                <div className="dialog-actions">
-                  <Button
-                    onClick={minimizeMonitor}
-                  >
-                    Perkecil ke Dashboard
-                  </Button>
+                <div className="dialog-actions exercise-live-actions">
+                  <Button onClick={minimizeMonitor}>Perkecil</Button>
                   <Button onClick={togglePause}>
-                    {paused ? "Lanjutkan latihan" : "Ambil Jeda"}
+                    {paused ? "Lanjutkan" : "Ambil jeda"}
                   </Button>
                   <Button primary onClick={() => setConfirmEnd(true)}>
-                    Selesaikan Sesi
+                    Selesaikan sesi
                   </Button>
                 </div>
                 {confirmEnd && (

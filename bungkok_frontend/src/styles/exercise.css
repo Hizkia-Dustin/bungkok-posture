@@ -282,9 +282,41 @@
 .exercise-ready label { min-height: 36px; cursor: pointer; }
 .exercise-controls :is(input,select,button):focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .exercise-confirm, .exercise-earned, .exercise-summary-grid > div { border-radius: 10px; }
+/* Layar latihan berjalan (step 3) */
+.exercise-live-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.exercise-live-head .soft-tag { margin: 0; }
+.exercise-live-head small { font-size: 13px; color: var(--ink-secondary); }
+.exercise-live-head small strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.exercise-live-hero { display: grid; gap: 2px; }
+.exercise-live-hero > span { font-size: 14px; color: var(--ink-secondary); }
+.exercise-live-hero .exercise-timer { font-size: clamp(56px, 6vw, 76px); letter-spacing: -.04em; line-height: 1; }
+.exercise-live-status { display: grid; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid; border-left-width: 5px; }
+.exercise-live-status strong { font-size: 15px; }
+.exercise-live-status small { font-size: 13px; color: var(--ink-secondary); line-height: 1.45; }
+.exercise-live-status.is-good { background: #f0fdf4; border-color: #86efac; border-left-color: #167c55; }
+.exercise-live-status.is-bad { background: #fef2f2; border-color: #fca5a5; border-left-color: #b83242; }
+.exercise-live-status.is-warn { background: #fffbeb; border-color: #fde68a; border-left-color: #a5630a; }
+.exercise-live-status.is-info, .exercise-live-status.is-paused { background: var(--polar); border-color: var(--line); border-left-color: var(--ink-secondary); }
+.exercise-live-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.exercise-live-stats > div { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: #eaf2f8; }
+.exercise-live-stats dt { font-size: 12px; color: var(--ink-secondary); }
+.exercise-live-stats dd { margin: 0; font-size: 18px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.exercise-live-away { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.exercise-live-away > span { font-size: 12px; font-weight: 650; color: var(--ink-secondary); text-transform: uppercase; letter-spacing: .06em; }
+.exercise-live-away > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.exercise-live-away .soft-button { min-height: 40px; padding: 8px 14px; font-size: 13px; }
+.exercise-controls .exercise-live-away label { gap: 8px; min-height: 40px; font-size: 13px; cursor: pointer; }
+.exercise-live-note { font-size: 13px; color: #176444; font-weight: 600; }
+.exercise-live-actions { margin-top: 4px; }
+.exercise-live-actions .soft-button { white-space: nowrap; }
 @media (max-width: 750px) {
   .exercise-layout { grid-template-columns: minmax(0, 1fr); }
   .exercise-steps { gap: 6px 12px; }
+}
+@media (max-width: 520px) {
+  .exercise-live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .exercise-live-actions { flex-wrap: wrap; }
+  .exercise-live-actions .soft-button.primary { flex-basis: 100%; order: -1; }
 }
 @media (max-width: 520px) {
   .exercise-dialog { width: calc(100vw - 16px); }

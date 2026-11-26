@@ -91,3 +91,41 @@ def test_prediction_requires_three_lean_frames_before_label_switch(monkeypatch):
     assert record_prediction(db, row, forward)['stable_prediction'] == 'tegak'
     assert record_prediction(db, row, forward)['stable_prediction'] == 'tegak'
     assert record_prediction(db, row, forward)['stable_prediction'] == 'condong_depan'
+
+
+def front_arm_landmarks():
+    # Bahu kiri pengguna (11) di x=.65, kanan (12) di x=.35 → lebar bahu .30
+    points = [SimpleNamespace(x=.5, y=.5, visibility=.9) for _ in range(33)]
+    points[11].x, points[11].y = .65, .55
+    points[12].x, points[12].y = .35, .55
+    return points
+
+
+def test_own_raised_arm_counts_as_arm_activity():
+    points = front_arm_landmarks()
+    points[13].x, points[13].y = .75, .40   # siku naik di sisi sendiri
+    points[15].x, points[15].y = .72, .25   # pergelangan di atas bahu
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (True, True)
+
+
+def test_friend_hand_attached_to_user_wrist_is_rejected():
+    points = front_arm_landmarks()
+    # Siku pengguna masih di bawah (santai), tapi "pergelangan" melompat ke tangan teman di atas
+    points[13].x, points[13].y = .70, .80
+    points[15].x, points[15].y = .80, .32
+    valid, raised = PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30)
+    assert not raised
+
+
+def test_elbow_crossing_to_other_side_is_rejected():
+    points = front_arm_landmarks()
+    points[13].x, points[13].y = .38, .42   # "siku kiri" muncul di sisi bahu kanan
+    points[15].x, points[15].y = .40, .28
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (False, False)
+
+
+def test_hidden_elbow_is_not_counted():
+    points = front_arm_landmarks()
+    points[13].visibility = .2
+    points[15].x, points[15].y = .72, .25
+    assert PostureBackendV3._arm_state(points, 11, 13, 15, 12, .30) == (False, False)

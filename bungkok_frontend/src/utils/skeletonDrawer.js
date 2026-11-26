@@ -123,24 +123,24 @@ function renderCanvas(activeCanvas, state) {
   }
   const maxArmLength = shoulderWidth * 1.30;
 
-  // Validasi apakah lengan kiri & kanan adalah milik pengguna asli (bukan tangan orang lain yang lewat)
-  const isLeftArmValid = (() => {
-    const el = currentLandmarks[13];
-    const wr = currentLandmarks[15];
-    if (!ls || !el || !wr) return false;
-    if ((wr.visibility || 0) < 0.38) return false;
-    const dArm = Math.hypot(wr.x - ls.x, wr.y - ls.y);
-    return dArm <= maxArmLength;
-  })();
-
-  const isRightArmValid = (() => {
-    const el = currentLandmarks[14];
-    const wr = currentLandmarks[16];
-    if (!rs || !el || !wr) return false;
-    if ((wr.visibility || 0) < 0.38) return false;
-    const dArm = Math.hypot(wr.x - rs.x, wr.y - rs.y);
-    return dArm <= maxArmLength;
-  })();
+  // Validasi apakah lengan adalah milik pengguna asli (bukan tangan orang lain yang lewat).
+  // Aturan sama dengan backend (_arm_state): siku terlihat, panjang segmen sebanding
+  // lebar bahu, dan siku tetap di sisi bahunya sendiri.
+  const isArmValid = (sh, el, wr, opp) => {
+    if (!sh || !el || !wr || !opp) return false;
+    if ((wr.visibility || 0) < 0.38 || (el.visibility || 0) < 0.45) return false;
+    if (Math.hypot(wr.x - sh.x, wr.y - sh.y) > maxArmLength) return false;
+    const upperArm = Math.hypot(el.x - sh.x, el.y - sh.y);
+    const forearm = Math.hypot(wr.x - el.x, wr.y - el.y);
+    if (upperArm < shoulderWidth * 0.30 || upperArm > shoulderWidth * 1.10) return false;
+    if (forearm < shoulderWidth * 0.25 || forearm > shoulderWidth * 1.10) return false;
+    const ratio = forearm / upperArm;
+    if (ratio < 0.45 || ratio > 1.8) return false;
+    const ownSide = sh.x >= opp.x ? 1 : -1;
+    return (el.x - (sh.x + opp.x) / 2) * ownSide >= -0.25 * shoulderWidth;
+  };
+  const isLeftArmValid = isArmValid(ls, currentLandmarks[13], currentLandmarks[15], rs);
+  const isRightArmValid = isArmValid(rs, currentLandmarks[14], currentLandmarks[16], ls);
 
   function line(i, j, width = 4) {
     const a = currentLandmarks[i];
